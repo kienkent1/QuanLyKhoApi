@@ -1,15 +1,19 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 namespace QuanLyKhoApi.Data
 {
     public class TaiKhoanAuth
     {
         [Key]
-        [Required]
-        public int RoleId { get; set; }
+        [ForeignKey(nameof(TaiKhoan))]
+        public Guid MaNhanVien { get; set; }
 
-        [Required]
-        public string RoleName { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public string? Password { get; set; }
+
+        public string? RefreshToken { get; set; }
+
+        public DateTime? RefreshTokenExpiryTime { get; set; }
+        public string? GoogleId { get; set; }
 
     }
 }

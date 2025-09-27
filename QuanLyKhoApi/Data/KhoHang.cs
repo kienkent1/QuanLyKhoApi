@@ -5,15 +5,13 @@ namespace QuanLyKhoApi.Data
     {
         [Key]
         [Required]
-       public int ma_sp { get; set; }
-       public string ten_sp { get; set; }
-       public string mo_ta { get; set; }
-       public decimal gia_ban { get; set; }
-       public string don_vi_tinh { get; set; }
-       public int so_luong_ton { get; set; }
+       public int MaKho { get; set; }
+        [Required, MaxLength(200)]
+        public string TenKho { get; set; }
         [Required]
-        public int ma_kho { get; set; }
-        public string Loai { get; set; }
-        public DateTime created_at { get; set; } = DateTime.Now;
+        public string DiaChi { get; set; }
+       public string? MoTa { get; set; }
+
+        public DateTime CreateAt { get; set; } = DateTime.Now;
     }
 }

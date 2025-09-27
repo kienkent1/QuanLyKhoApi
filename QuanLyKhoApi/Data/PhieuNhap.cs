@@ -1,22 +1,29 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 namespace QuanLyKhoApi.Data
 {
     public class PhieuNhap
     {
         [Key]
         [Required]
-        public int ma_pn { get; set; }
+        public int MaPhieuNhap { get; set; }
         [Required]
-        public DateTime ngay_nhap { get; set; }
+        public DateTime NgayNhap { get; set; } = DateTime.Now;
         [Required]
-        public int ma_nv { get; set; }
+        public Guid MaNV { get; set; }
         [Required]
-        public string ma_ncc { get; set; }
-        [Required]
-        public int ma_kho { get; set; }
-        public decimal tong_tien { get; set; }
-        public int ma_trang_thai { get; set; }
-        public string ghi_chu { get; set; }
-        public DateTime created_at { get; set; } = DateTime.Now;
+        public string MaNCC { get; set; }
+        
+        public int MaTrangThai { get; set; }
+        public string? GhiChu { get; set; }
+
+        [ForeignKey(nameof(MaTrangThai))]
+        public TrangThaiPhieu TrangThaiPhieu { get; set; }
+
+        [ForeignKey(nameof(MaNV))]
+        public NhanVien NhanVien { get; set; }
+
+        
+
     }
 }

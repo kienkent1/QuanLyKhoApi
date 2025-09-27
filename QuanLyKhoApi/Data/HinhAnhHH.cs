@@ -2,18 +2,16 @@
 using System.ComponentModel.DataAnnotations.Schema;
 namespace QuanLyKhoApi.Data
 {
-    public class ChiTietXuat
+    public class HinhAnhHH
     {
-        [Key, ForeignKey(nameof(PhieuXuat))]
-        public int MaPhieuXuat { get; set; }
-
+        [Key]
+        [Required]
+        public int Id { get; set; }
         [Required]
         public string MaHH { get; set; }
         [Required]
-        public int SoLuong { get; set; }
-
-        [Required]
-        public decimal DonGia { get; set; }
+        public string Url { get; set; }
+        public DateTime CreateAt { get; set; } = DateTime.Now;
 
         [ForeignKey(nameof(MaHH))]
         public HangHoa HangHoa { get; set; }
