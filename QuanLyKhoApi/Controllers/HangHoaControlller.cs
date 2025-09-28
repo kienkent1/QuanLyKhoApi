@@ -7,5 +7,9 @@ namespace QuanLyKhoApi.Controllers
     [ApiController]
     public class HangHoaControlller : ControllerBase
     {
+        public IActionResult GetHangHoa()
+        {
+   
+        }
     }
 }
