@@ -6,16 +6,19 @@ namespace QuanLyKhoApi.Data
     {
         [Key]
         public Guid IdNhanVien   { get; set; }
-        [Required]
+        [Required, MaxLength(200)]
         public string TenNhanVien { get; set; }
         [Required]
         public string email { get; set; }
+        [Required, MaxLength(15)]
         public string sdt { get; set; }
-        public string diaChi { get; set; }
+        public string? diaChi { get; set; }
         public DateTime ngaySinh { get; set; }
-        public bool gioiTinh { get; set; }
+        [Required]
+        public string gioiTinh { get; set; }
+        [Required]
         public string chucVu { get; set; }
-        public bool trangthai { get; set; }
+        public bool trangthai { get; set; } = true;
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
 

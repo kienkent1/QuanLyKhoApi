@@ -1,9 +1,16 @@
-﻿namespace QuanLyKhoApi.Data
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace QuanLyKhoApi.Data
 {
     public class Role
     {
-        public const string Admin = "Admin";
-        public const string User = "User";
+        [Key]
+        [ForeignKey(nameof(TaiKhoanAuth))]
+        public Guid IdNhanVien { get; set; }
+        [Required]
+        public string VaiTro { get; set; }
+        public string? Quyen { get; set; }
 
     }
 }

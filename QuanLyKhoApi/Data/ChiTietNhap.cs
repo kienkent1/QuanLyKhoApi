@@ -1,18 +1,28 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 namespace QuanLyKhoApi.Data
 {
     public class ChiTietNhap
     {
-        [Key]
+        [Key, ForeignKey(nameof(PhieuNhap))]
+        public int MaPhieuNhap { get; set; }
+
         [Required]
-        public int id { get; set; }
+        public string MaHH { get; set; }
+
         [Required]
-        public int ma_pn { get; set; }
+        public int SoLuong { get; set; }
+
         [Required]
-        public int ma_sp { get; set; }
+        public decimal DonGia { get; set; }
+
         [Required]
-        public int so_luong { get; set; }
-        public decimal don_gia { get; set; }
-        public decimal thanh_tien { get; set; }
+        public int MaKho { get; set; }
+
+        [ForeignKey(nameof(MaHH))]
+        public HangHoa HangHoa { get; set; }
+
+        [ForeignKey(nameof(MaKho))]
+        public KhoHang KhoHang { get; set; }
     }
 }
