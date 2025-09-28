@@ -17,7 +17,6 @@ namespace QuanLyKhoApi.Data
         public DbSet<PhieuXuat> PhieuXuat { get;set; }
         public DbSet<Role> Role { get; set; }
         public DbSet<TaiKhoan> TaiKhoan { get;set; }
-        public DbSet<TaiKhoanAuth> TaiKhoanAuth { get; set; }
         public DbSet<TrangThaiPhieu> TrangThaiPhieu { get; set; }
     }
 }

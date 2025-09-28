@@ -6,7 +6,7 @@ namespace QuanLyKhoApi.Data
     public class Role
     {
         [Key]
-        [ForeignKey(nameof(TaiKhoanAuth))]
+        [ForeignKey(nameof(TaiKhoan))]
         public Guid IdNhanVien { get; set; }
         [Required]
         public string VaiTro { get; set; }
