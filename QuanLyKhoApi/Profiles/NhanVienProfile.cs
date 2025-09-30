@@ -9,6 +9,7 @@ namespace QuanLyKhoApi.Profiles
     {
         public NhanVienProfile() {
             CreateMap<NhanVien, NhanVienDto>().ReverseMap();
+            CreateMap<ChangePassModel, NhanVien>().ReverseMap();
         }
     }
 }

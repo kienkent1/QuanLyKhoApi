@@ -1,11 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace QuanLyKhoApi.Data
+namespace QuanLyKhoApi.Dto
 {
-    public class NhanVien
+    public class ChangePassModel
     {
-        [Key]
-        public Guid IdNhanVien   { get; set; }
         [Required, MaxLength(200)]
         public string TenNhanVien { get; set; }
         [Required]
@@ -22,7 +20,7 @@ namespace QuanLyKhoApi.Data
         public string? UrlHinh { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public DateTime? UpdateAt { get; set; }
-
-
+        [Required]
+        public string PasswordHash { get; set; }
     }
 }
