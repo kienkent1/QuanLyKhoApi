@@ -65,12 +65,29 @@ namespace QuanLyKhoApi.Controllers
         }
 
         [HttpGet("GetKhoHang")]
-        public async Task<IActionResult> GetKhoHang()
+        public async Task<IActionResult> GetKhoHang([FromQuery] string? query)
         {
             try
             {
-                var khoHang = await service.GetKhoHang();
+                var khoHang = await service.GetKhoHang(query);
                 return Ok(khoHang);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        [HttpGet("GetKhoHangById")]
+        public async Task<IActionResult> GetKhoHangById([FromQuery] int maKho)
+        {
+            try
+            {
+                var dto = await service.GetKhoHangById(maKho);
+                if (dto == null)
+                {
+                    return NotFound($"Không tìm thấy kho với mã: {maKho}");
+                }
+                return Ok(dto);
             }
             catch (Exception ex)
             {
