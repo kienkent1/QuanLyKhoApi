@@ -11,7 +11,6 @@ namespace QuanLyKhoApi.Data
         [Required]
         public string DiaChi { get; set; }
        public string? MoTa { get; set; }
-
         public DateTime CreateAt { get; set; } = DateTime.Now;
     }
 }
