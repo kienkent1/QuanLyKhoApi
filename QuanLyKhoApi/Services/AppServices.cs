@@ -7,6 +7,7 @@ namespace QuanLyKhoApi.Services
         public static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
             services.AddScoped<INhanVienService, NhanVienService>();
+            services.AddScoped<IKhoHangService, KhoHangService>();
             return services;
         }
     }
