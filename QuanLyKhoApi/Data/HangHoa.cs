@@ -23,6 +23,7 @@ namespace QuanLyKhoApi.Data
 
         [ForeignKey(nameof(IdLoai))]
         public Loai loai { get; set; }
+        public ICollection<HinhAnhHH> HinhAnhs { get; set; } = new List<HinhAnhHH>();
 
     }
 }

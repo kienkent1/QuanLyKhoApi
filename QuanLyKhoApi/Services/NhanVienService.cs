@@ -40,10 +40,18 @@ namespace QuanLyKhoApi.Services
 
         public async Task< NhanVienDto?> ThemNhanVienAsync(NhanVienDto nhanVien)
         {
-            var NewNhanVien = mapper.Map<NhanVien>(nhanVien);
-            await db.NhanVien.AddAsync(NewNhanVien);
-            await db.SaveChangesAsync();
-            return mapper.Map<NhanVienDto>(NewNhanVien);
+            try
+            {
+                var NewNhanVien = mapper.Map<NhanVien>(nhanVien);
+                NewNhanVien.IdNhanVien = Guid.NewGuid();
+                NewNhanVien.ngaySinh = DateTime.SpecifyKind(NewNhanVien.ngaySinh, DateTimeKind.Utc);
+                await db.NhanVien.AddAsync(NewNhanVien);
+                await db.SaveChangesAsync();
+                return mapper.Map<NhanVienDto>(NewNhanVien);
+            }
+            catch (Exception ex) {
+                return null;
+            }
         }
 
         public async Task<NhanVienDto> UpdateNhanVienAsync(Guid id, NhanVienDto dto)

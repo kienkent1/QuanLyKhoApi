@@ -6,10 +6,10 @@ namespace QuanLyKhoApi.Data
     public class PhieuXuat
     {
         [Key]
-        [Required]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int MaPhieuXuat { get; set; }
         [Required]
-        public DateTime NgayXuat { get; set; } = DateTime.Now;
+        public DateTime NgayXuat { get; set; } = DateTime.UtcNow;
         [Required]
         public Guid MaNV{ get; set; } 
         [Required]
