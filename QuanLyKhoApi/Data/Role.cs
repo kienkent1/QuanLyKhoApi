@@ -6,11 +6,15 @@ namespace QuanLyKhoApi.Data
     public class Role
     {
         [Key]
-        [ForeignKey(nameof(TaiKhoan))]
-        public Guid IdNhanVien { get; set; }
+        public string Id { get; set; }
+   
+        public Guid IdTaiKhoan { get; set; }
         [Required]
         public string VaiTro { get; set; }
         public string? Quyen { get; set; }
+
+        [ForeignKey(nameof(IdTaiKhoan))]
+        public TaiKhoan TaiKhoan { get; set; }
 
     }
 }

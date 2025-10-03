@@ -16,7 +16,7 @@ namespace QuanLyKhoApi.Data
 
         public DateTime? RefreshTokenExpiryTime { get; set; }
         public string? GoogleId { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
-
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public ICollection<Role> roles { get; set; } = new List<Role>();
     }
 }
