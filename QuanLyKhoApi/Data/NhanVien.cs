@@ -20,7 +20,7 @@ namespace QuanLyKhoApi.Data
         public string chucVu { get; set; }
         public bool trangthai { get; set; } = true;
         public string? UrlHinh { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdateAt { get; set; }
 
 

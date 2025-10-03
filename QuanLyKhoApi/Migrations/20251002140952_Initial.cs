@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -15,12 +16,12 @@ namespace QuanLyKhoApi.Migrations
                 name: "KhoHang",
                 columns: table => new
                 {
-                    MaKho = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    TenKho = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    DiaChi = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    MoTa = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CreateAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    MaKho = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    TenKho = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    DiaChi = table.Column<string>(type: "text", nullable: false),
+                    MoTa = table.Column<string>(type: "text", nullable: true),
+                    CreateAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -31,11 +32,11 @@ namespace QuanLyKhoApi.Migrations
                 name: "Loai",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    TenLoai = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    MoTa = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    HinhAnh = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    TenLoai = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    MoTa = table.Column<string>(type: "text", nullable: true),
+                    HinhAnh = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -46,14 +47,14 @@ namespace QuanLyKhoApi.Migrations
                 name: "NhaCungCap",
                 columns: table => new
                 {
-                    MaNCC = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    TenNCC = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    DiaChi = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    DienThoai = table.Column<string>(type: "nvarchar(15)", maxLength: 15, nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CreateAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Deleted = table.Column<bool>(type: "bit", nullable: false),
-                    Deleted_at = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    MaNCC = table.Column<string>(type: "text", nullable: false),
+                    TenNCC = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    DiaChi = table.Column<string>(type: "text", nullable: true),
+                    DienThoai = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: false),
+                    Email = table.Column<string>(type: "text", nullable: true),
+                    CreateAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Deleted = table.Column<bool>(type: "boolean", nullable: false),
+                    Deleted_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -64,16 +65,18 @@ namespace QuanLyKhoApi.Migrations
                 name: "NhanVien",
                 columns: table => new
                 {
-                    IdNhanVien = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    TenNhanVien = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    email = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    sdt = table.Column<string>(type: "nvarchar(15)", maxLength: 15, nullable: false),
-                    diaChi = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ngaySinh = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    gioiTinh = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    chucVu = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    trangthai = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    IdNhanVien = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenNhanVien = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    email = table.Column<string>(type: "text", nullable: false),
+                    sdt = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: false),
+                    diaChi = table.Column<string>(type: "text", nullable: true),
+                    ngaySinh = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    gioiTinh = table.Column<string>(type: "text", nullable: false),
+                    chucVu = table.Column<string>(type: "text", nullable: false),
+                    trangthai = table.Column<bool>(type: "boolean", nullable: false),
+                    UrlHinh = table.Column<string>(type: "text", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdateAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -81,25 +84,16 @@ namespace QuanLyKhoApi.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Role",
-                columns: table => new
-                {
-                    IdNhanVien = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    VaiTro = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Quyen = table.Column<string>(type: "nvarchar(max)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Role", x => x.IdNhanVien);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "TaiKhoan",
                 columns: table => new
                 {
-                    IdNhanVien = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    TenDangNhap = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    IdNhanVien = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenDangNhap = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Password = table.Column<string>(type: "text", nullable: true),
+                    RefreshToken = table.Column<string>(type: "text", nullable: true),
+                    RefreshTokenExpiryTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    GoogleId = table.Column<string>(type: "text", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -107,28 +101,13 @@ namespace QuanLyKhoApi.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "TaiKhoanAuth",
-                columns: table => new
-                {
-                    MaNhanVien = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Password = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    RefreshToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    RefreshTokenExpiryTime = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    GoogleId = table.Column<string>(type: "nvarchar(max)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_TaiKhoanAuth", x => x.MaNhanVien);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "TrangThaiPhieu",
                 columns: table => new
                 {
-                    MaTrangThai = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    TenTrangThai = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    MoTa = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    MaTrangThai = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    TenTrangThai = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    MoTa = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -139,14 +118,14 @@ namespace QuanLyKhoApi.Migrations
                 name: "HangHoa",
                 columns: table => new
                 {
-                    MaHH = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    TenHH = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    MoTa = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    DonViTinh = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    GiaBan = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    SoLuongTon = table.Column<int>(type: "int", nullable: false),
-                    MaKho = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    IdLoai = table.Column<int>(type: "int", nullable: false)
+                    MaHH = table.Column<string>(type: "text", nullable: false),
+                    TenHH = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    MoTa = table.Column<string>(type: "text", nullable: true),
+                    DonViTinh = table.Column<string>(type: "text", nullable: false),
+                    GiaBan = table.Column<decimal>(type: "numeric", nullable: false),
+                    SoLuongTon = table.Column<int>(type: "integer", nullable: false),
+                    MaKho = table.Column<string>(type: "text", nullable: false),
+                    IdLoai = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -163,13 +142,13 @@ namespace QuanLyKhoApi.Migrations
                 name: "PhieuXuat",
                 columns: table => new
                 {
-                    MaPhieuXuat = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    NgayXuat = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    MaNV = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    MaKho = table.Column<int>(type: "int", nullable: false),
-                    MaTrangThai = table.Column<int>(type: "int", nullable: false),
-                    GhiChu = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    MaPhieuXuat = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    NgayXuat = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    MaNV = table.Column<Guid>(type: "uuid", nullable: false),
+                    MaKho = table.Column<int>(type: "integer", nullable: false),
+                    MaTrangThai = table.Column<int>(type: "integer", nullable: false),
+                    GhiChu = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -189,16 +168,36 @@ namespace QuanLyKhoApi.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Role",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    IdTaiKhoan = table.Column<Guid>(type: "uuid", nullable: false),
+                    VaiTro = table.Column<string>(type: "text", nullable: false),
+                    Quyen = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Role", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Role_TaiKhoan_IdTaiKhoan",
+                        column: x => x.IdTaiKhoan,
+                        principalTable: "TaiKhoan",
+                        principalColumn: "IdNhanVien",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "PhieuNhap",
                 columns: table => new
                 {
-                    MaPhieuNhap = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    NgayNhap = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    MaNV = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    MaNCC = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    MaTrangThai = table.Column<int>(type: "int", nullable: false),
-                    GhiChu = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    MaPhieuNhap = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    NgayNhap = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    MaNV = table.Column<Guid>(type: "uuid", nullable: false),
+                    MaNCC = table.Column<string>(type: "text", nullable: false),
+                    MaTrangThai = table.Column<int>(type: "integer", nullable: false),
+                    GhiChu = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -221,12 +220,12 @@ namespace QuanLyKhoApi.Migrations
                 name: "ChiTietNhap",
                 columns: table => new
                 {
-                    MaPhieuNhap = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    MaHH = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    SoLuong = table.Column<int>(type: "int", nullable: false),
-                    DonGia = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    MaKho = table.Column<int>(type: "int", nullable: false)
+                    MaPhieuNhap = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    MaHH = table.Column<string>(type: "text", nullable: false),
+                    SoLuong = table.Column<int>(type: "integer", nullable: false),
+                    DonGia = table.Column<decimal>(type: "numeric", nullable: false),
+                    MaKho = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -249,11 +248,11 @@ namespace QuanLyKhoApi.Migrations
                 name: "ChiTietXuat",
                 columns: table => new
                 {
-                    MaPhieuXuat = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    MaHH = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    SoLuong = table.Column<int>(type: "int", nullable: false),
-                    DonGia = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
+                    MaPhieuXuat = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    MaHH = table.Column<string>(type: "text", nullable: false),
+                    SoLuong = table.Column<int>(type: "integer", nullable: false),
+                    DonGia = table.Column<decimal>(type: "numeric", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -270,11 +269,10 @@ namespace QuanLyKhoApi.Migrations
                 name: "HinhAnhHH",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    MaHH = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Url = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CreateAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    MaHH = table.Column<string>(type: "text", nullable: false),
+                    Url = table.Column<string>(type: "text", nullable: false),
+                    CreateAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -331,6 +329,11 @@ namespace QuanLyKhoApi.Migrations
                 name: "IX_PhieuXuat_MaNV",
                 table: "PhieuXuat",
                 column: "MaNV");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Role_IdTaiKhoan",
+                table: "Role",
+                column: "IdTaiKhoan");
         }
 
         /// <inheritdoc />
@@ -358,12 +361,6 @@ namespace QuanLyKhoApi.Migrations
                 name: "Role");
 
             migrationBuilder.DropTable(
-                name: "TaiKhoan");
-
-            migrationBuilder.DropTable(
-                name: "TaiKhoanAuth");
-
-            migrationBuilder.DropTable(
                 name: "HangHoa");
 
             migrationBuilder.DropTable(
@@ -374,6 +371,9 @@ namespace QuanLyKhoApi.Migrations
 
             migrationBuilder.DropTable(
                 name: "NhanVien");
+
+            migrationBuilder.DropTable(
+                name: "TaiKhoan");
 
             migrationBuilder.DropTable(
                 name: "Loai");
