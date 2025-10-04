@@ -3,14 +3,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace QuanLyKhoApi.Data
 {
-    public class Role
+    public class Claims
     {
         [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public string Id { get; set; }
-   
-        public string VaiTro { get; set; }
+        public int Id { get; set; }
 
-        public ICollection<Claims> Claims { get; set; } = new List<Claims>();
-
+        public string Quyen { get; set; }
     }
 }

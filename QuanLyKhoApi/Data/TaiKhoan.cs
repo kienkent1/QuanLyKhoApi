@@ -18,5 +18,6 @@ namespace QuanLyKhoApi.Data
         public string? GoogleId { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public ICollection<Role> roles { get; set; } = new List<Role>();
+        public ICollection<Claims> Claims { get; set; } = new List<Claims>();
     }
 }
