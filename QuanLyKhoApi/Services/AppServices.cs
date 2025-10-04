@@ -8,6 +8,7 @@ namespace QuanLyKhoApi.Services
         {
             services.AddScoped<INhanVienService, NhanVienService>();
             services.AddScoped<IKhoHangService, KhoHangService>();
+            services.AddScoped<ILoaiService, LoaiService>();
             return services;
         }
     }
