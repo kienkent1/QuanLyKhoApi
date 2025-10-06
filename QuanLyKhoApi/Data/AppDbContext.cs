@@ -9,7 +9,6 @@ namespace QuanLyKhoApi.Data
         public DbSet<ChiTietXuat> ChiTietXuat { get; set; }
         public DbSet<HangHoa> HangHoa { get; set; }
         public DbSet<HinhAnhHH> HinhAnhHH { get; set; }
-        public DbSet<KhoHang> KhoHang { get; set; }
         public DbSet<Loai> Loai { get; set; }
         public DbSet<NhaCungCap> NhaCungCap { get; set; }
         public DbSet<NhanVien> NhanVien { get; set; }

@@ -113,6 +113,8 @@ namespace QuanLyKhoApi.Services
                 return false;
             if (await context.TaiKhoan.AnyAsync(u => u.TenDangNhap == userName))
                 return false;
+            var TrangThai = await context.NhanVien.AnyAsync(u => u.IdNhanVien == id && u.trangthai == false);
+            if (TrangThai) return false;
             return true;
         }
 
