@@ -11,6 +11,7 @@ namespace QuanLyKhoApi.Data
         public string VaiTro { get; set; }
 
         public ICollection<Claims> Claims { get; set; } = new List<Claims>();
+        public ICollection<TaiKhoanRole> TaiKhoanRoles { get; set; } = new List<TaiKhoanRole>();
 
     }
 }

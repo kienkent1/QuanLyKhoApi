@@ -13,7 +13,9 @@ namespace QuanLyKhoApi.Data
         public Guid MaNV { get; set; }
         [Required]
         public string MaNCC { get; set; }
-        
+        [Required]
+        public int MaKho { get; set; }
+        [Required]
         public int MaTrangThai { get; set; }
         public string? GhiChu { get; set; }
 
@@ -23,7 +25,8 @@ namespace QuanLyKhoApi.Data
         [ForeignKey(nameof(MaNV))]
         public NhanVien NhanVien { get; set; }
 
-        
+        [ForeignKey(nameof(MaKho))]
+        public KhoHang khoHang { get; set; }
 
     }
 }

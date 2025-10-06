@@ -1,17 +1,19 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using AutoMapper;
+using Google.Apis.Auth;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.VisualBasic;
 using QuanLyKhoApi.Data;
 using QuanLyKhoApi.Dto.AuthenDto;
 using QuanLyKhoApi.IServices;
-using QuanLyKhoApi.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
 namespace QuanLyKhoApi.Services
 {
-    public class AuthService(AppDbContext context, IConfiguration configuration) : IAuthService
+    public class AuthService(AppDbContext context, IConfiguration configuration, IMapper mapper) : IAuthService
     {
         //tạo token
         private string CreateToken(TaiKhoan user)
@@ -20,9 +22,14 @@ namespace QuanLyKhoApi.Services
             {
                 new Claim(ClaimTypes.Name, user.TenDangNhap),
                 new Claim(ClaimTypes.NameIdentifier, user.IdNhanVien.ToString()),
-                new Claim(ClaimTypes.Role, user.roles.ToString())
+
             };
 
+            //vì dùng user id để tìm role của user đó nên không cần lặp qua roles nữa
+            //foreach (var role in user.TaiKhoanRoles)
+            //{
+            //    claims.Add(new Claim(ClaimTypes.Role, role.RoleId));
+            //}
             //system.identity.tokens.jwt tai thu vien ve
             var key = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(configuration.GetValue<string>("AppSettings:Token")!)
@@ -54,20 +61,32 @@ namespace QuanLyKhoApi.Services
         //kiểm tra token có còn hợp lệ
         private async Task<TaiKhoan?> ValidateRefreshTokenAsync(Guid userId, string refreshToken)
         {
-            var user = await context.TaiKhoan.FindAsync(userId);
-            if (user is null || user.RefreshToken != refreshToken || user.RefreshTokenExpiryTime < DateTime.UtcNow)
-            {
+            var token = await context.TaiKhoanToken
+        .FirstOrDefaultAsync(t => t.IdTaiKhoan == userId && t.RefreshToken == refreshToken);
+
+            if (token is null || token.ExpiryTime < DateTime.UtcNow)
                 return null;
-            }
-            return user;
+
+            // load user kèm role 
+            return await context.TaiKhoan
+                .Include(u => u.TaiKhoanRoles)
+                .ThenInclude(tr => tr.Role)
+                .FirstOrDefaultAsync(u => u.IdNhanVien == userId);
         }
 
         //tạo vào lưu token mới
-        private async Task<string> GenerateAndSaveRefreshToken(TaiKhoan user)
+        private async Task<string> GenerateAndSaveRefreshToken(Guid IdTaiKhoan)
         {
+
             var refreshToken = CreateRefreshToken();
-            user.RefreshToken = refreshToken;
-            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(2);
+
+            var token = new TaiKhoanToken
+            {
+                IdTaiKhoan = IdTaiKhoan,
+                RefreshToken = refreshToken,
+                ExpiryTime = DateTime.UtcNow.AddDays(2)
+            };
+            context.TaiKhoanToken.Add(token);
             await context.SaveChangesAsync();
             return refreshToken;
         }
@@ -78,7 +97,7 @@ namespace QuanLyKhoApi.Services
             return new TokenResponseDto
             {
                 AccessToken = CreateToken(user),
-                RefreshToken = await GenerateAndSaveRefreshToken(user)
+                RefreshToken = await GenerateAndSaveRefreshToken(user.IdNhanVien)
             };
         }
 
@@ -90,54 +109,185 @@ namespace QuanLyKhoApi.Services
         //kiểm tra tài khoản có hợp lệ để register
         public async Task<bool> ValidateAccount(Guid id, string userName)
         {
-            if(await context.TaiKhoan.AnyAsync(u => u.IdNhanVien == id))
-             return false;
-            if(await context.TaiKhoan.AnyAsync(u => u.TenDangNhap == userName))
+            if (await context.TaiKhoan.AnyAsync(u => u.IdNhanVien == id))
+                return false;
+            if (await context.TaiKhoan.AnyAsync(u => u.TenDangNhap == userName))
                 return false;
             return true;
         }
 
-       
-        public async Task<TaiKhoan> RegisterAsync(TaiKhoan req)
+        public async Task<bool> IsEmailExit(string email)
         {
-            var exitsUser = await ExitsUser(req.IdNhanVien);
-            if (exitsUser is false) return null;
-
-            var validateAccount = await ValidateAccount(req.IdNhanVien, req.TenDangNhap);
-            if (validateAccount is false) return null;
-            var user = new TaiKhoan();
-            var hashedPass = new PasswordHasher<TaiKhoan>()
-                .HashPassword(user, req.Password);
-
-            user.IdNhanVien = req.IdNhanVien;
-            user.TenDangNhap = req.TenDangNhap;
-            user.Password = hashedPass;
-            context.TaiKhoan.Add(user);
-            var userRole = new Role
+            return await context.NhanVien.AnyAsync(u => u.email == email);
+        }
+        public async Task<TaiKhoan> RegisterAsync(RegisterDto req)
+        {
+            try
             {
-               Id = "1",
-       
-                VaiTro = "User"
-            };
-            await context.SaveChangesAsync();
-            return user;
-        } 
-        public Task<TokenResponseDto?> LoginAsync(LoginDto req)
+                var hashedPass = new PasswordHasher<RegisterDto>()
+                    .HashPassword(req, req.Password);
+
+                req.Password = hashedPass;
+                req.CreatedAt = DateTime.UtcNow;
+                var account = mapper.Map<TaiKhoan>(req);
+                context.TaiKhoan.Add(account);
+                var userRole = new TaiKhoanRole
+                {
+                    TaiKhoanId = req.IdNhanVien,
+                    RoleId = "user"
+                };
+                context.TaiKhoanRoles.Add(userRole);
+                await context.SaveChangesAsync();
+                return account;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+
+        }
+        public async Task<TokenResponseDto?> LoginAsync(LoginDto req)
         {
-            throw new NotImplementedException();
+            var user = await context.TaiKhoan
+                 .Include(t => t.NhanVien)
+                 .Include(t => t.TaiKhoanRoles)
+         .ThenInclude(tr => tr.Role)
+        .FirstOrDefaultAsync(t =>
+            t.TenDangNhap == req.UserNameOrEmail ||
+            t.NhanVien.email == req.UserNameOrEmail);
+
+            if (user is null) return null;
+
+            if (new PasswordHasher<TaiKhoan>().VerifyHashedPassword(user, user.Password, req.Password)
+                == PasswordVerificationResult.Failed)
+            {
+                return null;
+            }
+
+
+            return await CreateTokenResponseAsync(user);
         }
 
         public async Task<TokenResponseDto?> RefreshTokenAsync(RefreshTokenRequestDto req)
         {
             var user = await ValidateRefreshTokenAsync(req.UserId, req.RefreshToken);
             if (user is null) return null;
+            var refToken = await context.TaiKhoanToken
+                .FirstOrDefaultAsync(t => t.IdTaiKhoan == req.UserId && t.RefreshToken == req.RefreshToken);
+            if (refToken is not null)
+            {
+                context.TaiKhoanToken.Remove(refToken);
+                await context.SaveChangesAsync();
+            }
             return await CreateTokenResponseAsync(user);
         }
 
-        
-        public Task<TokenResponseDto?> GoogleLoginAsync(string idToken)
+
+        #region Authentication GG
+        public  async Task<GoogleResponse> GetGoogleResponse(GoogleAuthDto dto)
         {
-            throw new NotImplementedException();
+            GoogleJsonWebSignature.Payload payload;
+            try
+            {
+                payload = await GoogleJsonWebSignature.ValidateAsync(
+                    dto.IdToken,
+                    new GoogleJsonWebSignature.ValidationSettings
+                    {
+                        Audience = new[]
+                        {
+                            configuration.GetValue<string>("Authentication:Google:ClientId")!
+                        }
+                    }
+                    );
+
+                if (!payload.EmailVerified) return null;
+                var res = new GoogleResponse();
+                res.GoogleSub = payload.Subject;
+                res.Email = payload.Email.Trim().ToLowerInvariant();
+                res.EmailVerified  = payload.EmailVerified;
+                res.Picture = payload.Picture;
+                return res;
+            }
+            catch
+            {
+                return null;
+            }
         }
+        public async Task<RegisterGG?> RegisterGoogle(RegisterGG req, GoogleAuthDto gg)
+        {
+            try
+            {
+                var res = await GetGoogleResponse(gg);
+                if (res is  null) return null;
+                var exitsUser = await ExitsUser(req.IdNhanVien);
+                if (exitsUser is false) return null;
+
+                var validateAccount = await ValidateAccount(req.IdNhanVien, req.TenDangNhap);
+                if (validateAccount is false) return null;
+                if (String.IsNullOrEmpty(req.TenDangNhap)) req.TenDangNhap = res.Email;
+         
+                req.CreatedAt = DateTime.UtcNow;
+                var account = mapper.Map<TaiKhoan>(req);
+                account.GoogleId = res.GoogleSub;
+                context.TaiKhoan.Add(account);
+                var userRole = new TaiKhoanRole
+                {
+                    TaiKhoanId = req.IdNhanVien,
+                    RoleId = "user"
+                };
+                context.TaiKhoanRoles.Add(userRole);
+
+                var user = await context.NhanVien.Include(u => u.TaiKhoan)
+                    .FirstOrDefaultAsync(nv =>nv.IdNhanVien == req.IdNhanVien && nv.UrlHinh == null);
+                if (user is not null)
+                {
+                    user.UrlHinh = res.Picture;
+                    context.NhanVien.Update(user);
+                }
+                await context.SaveChangesAsync();
+                return req;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+        }
+        public async Task<TokenResponseDto?> GoogleLoginAsync(GoogleAuthDto dto)
+        {
+            try
+            {
+                var GGResponse = await GetGoogleResponse(dto);
+
+                var Account = await context.TaiKhoan.Include(u => u.NhanVien)
+                    .FirstOrDefaultAsync(u => u.GoogleId == GGResponse.GoogleSub  || u.NhanVien.email == GGResponse.Email);
+
+
+
+                if (Account is not null)
+                {
+                    if (Account.GoogleId == GGResponse.GoogleSub)
+                    {
+                        return await CreateTokenResponseAsync(Account);
+                    }
+                    else
+                    {
+                        var isAccExit = await context.TaiKhoan.FirstOrDefaultAsync(t => t.GoogleId == GGResponse.GoogleSub);
+                        if (isAccExit is not null) return await CreateTokenResponseAsync(isAccExit);
+                        else return null;
+                    }
+
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+
+        }
+        #endregion
     }
 }

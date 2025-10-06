@@ -84,23 +84,6 @@ namespace QuanLyKhoApi.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "TaiKhoan",
-                columns: table => new
-                {
-                    IdNhanVien = table.Column<Guid>(type: "uuid", nullable: false),
-                    TenDangNhap = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    Password = table.Column<string>(type: "text", nullable: true),
-                    RefreshToken = table.Column<string>(type: "text", nullable: true),
-                    RefreshTokenExpiryTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    GoogleId = table.Column<string>(type: "text", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_TaiKhoan", x => x.IdNhanVien);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "TrangThaiPhieu",
                 columns: table => new
                 {
@@ -168,21 +151,22 @@ namespace QuanLyKhoApi.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Role",
+                name: "TaiKhoan",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "text", nullable: false),
-                    IdTaiKhoan = table.Column<Guid>(type: "uuid", nullable: false),
-                    VaiTro = table.Column<string>(type: "text", nullable: false),
-                    Quyen = table.Column<string>(type: "text", nullable: true)
+                    IdNhanVien = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenDangNhap = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Password = table.Column<string>(type: "text", nullable: true),
+                    GoogleId = table.Column<string>(type: "text", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Role", x => x.Id);
+                    table.PrimaryKey("PK_TaiKhoan", x => x.IdNhanVien);
                     table.ForeignKey(
-                        name: "FK_Role_TaiKhoan_IdTaiKhoan",
-                        column: x => x.IdTaiKhoan,
-                        principalTable: "TaiKhoan",
+                        name: "FK_TaiKhoan_NhanVien_IdNhanVien",
+                        column: x => x.IdNhanVien,
+                        principalTable: "NhanVien",
                         principalColumn: "IdNhanVien",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -285,6 +269,117 @@ namespace QuanLyKhoApi.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Role",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    VaiTro = table.Column<string>(type: "text", nullable: false),
+                    TaiKhoanIdNhanVien = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Role", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Role_TaiKhoan_TaiKhoanIdNhanVien",
+                        column: x => x.TaiKhoanIdNhanVien,
+                        principalTable: "TaiKhoan",
+                        principalColumn: "IdNhanVien");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TaiKhoanToken",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    RefreshToken = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    ExpiryTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IdTaiKhoan = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TaiKhoanToken", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TaiKhoanToken_TaiKhoan_IdTaiKhoan",
+                        column: x => x.IdTaiKhoan,
+                        principalTable: "TaiKhoan",
+                        principalColumn: "IdNhanVien",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Claims",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Quyen = table.Column<string>(type: "text", nullable: false),
+                    RoleId = table.Column<string>(type: "text", nullable: true),
+                    TaiKhoanIdNhanVien = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Claims", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Claims_Role_RoleId",
+                        column: x => x.RoleId,
+                        principalTable: "Role",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Claims_TaiKhoan_TaiKhoanIdNhanVien",
+                        column: x => x.TaiKhoanIdNhanVien,
+                        principalTable: "TaiKhoan",
+                        principalColumn: "IdNhanVien");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TaiKhoanRoles",
+                columns: table => new
+                {
+                    TaiKhoanId = table.Column<Guid>(type: "uuid", nullable: false),
+                    RoleId = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TaiKhoanRoles", x => new { x.TaiKhoanId, x.RoleId });
+                    table.ForeignKey(
+                        name: "FK_TaiKhoanRoles_Role_RoleId",
+                        column: x => x.RoleId,
+                        principalTable: "Role",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_TaiKhoanRoles_TaiKhoan_TaiKhoanId",
+                        column: x => x.TaiKhoanId,
+                        principalTable: "TaiKhoan",
+                        principalColumn: "IdNhanVien",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RoleClaims",
+                columns: table => new
+                {
+                    RoleId = table.Column<string>(type: "text", nullable: false),
+                    ClaimId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RoleClaims", x => new { x.RoleId, x.ClaimId });
+                    table.ForeignKey(
+                        name: "FK_RoleClaims_Claims_ClaimId",
+                        column: x => x.ClaimId,
+                        principalTable: "Claims",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_RoleClaims_Role_RoleId",
+                        column: x => x.RoleId,
+                        principalTable: "Role",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_ChiTietNhap_MaHH",
                 table: "ChiTietNhap",
@@ -299,6 +394,16 @@ namespace QuanLyKhoApi.Migrations
                 name: "IX_ChiTietXuat_MaHH",
                 table: "ChiTietXuat",
                 column: "MaHH");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Claims_RoleId",
+                table: "Claims",
+                column: "RoleId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Claims_TaiKhoanIdNhanVien",
+                table: "Claims",
+                column: "TaiKhoanIdNhanVien");
 
             migrationBuilder.CreateIndex(
                 name: "IX_HangHoa_IdLoai",
@@ -331,8 +436,23 @@ namespace QuanLyKhoApi.Migrations
                 column: "MaNV");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Role_IdTaiKhoan",
+                name: "IX_Role_TaiKhoanIdNhanVien",
                 table: "Role",
+                column: "TaiKhoanIdNhanVien");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RoleClaims_ClaimId",
+                table: "RoleClaims",
+                column: "ClaimId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TaiKhoanRoles_RoleId",
+                table: "TaiKhoanRoles",
+                column: "RoleId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TaiKhoanToken_IdTaiKhoan",
+                table: "TaiKhoanToken",
                 column: "IdTaiKhoan");
         }
 
@@ -358,7 +478,13 @@ namespace QuanLyKhoApi.Migrations
                 name: "PhieuXuat");
 
             migrationBuilder.DropTable(
-                name: "Role");
+                name: "RoleClaims");
+
+            migrationBuilder.DropTable(
+                name: "TaiKhoanRoles");
+
+            migrationBuilder.DropTable(
+                name: "TaiKhoanToken");
 
             migrationBuilder.DropTable(
                 name: "HangHoa");
@@ -370,13 +496,19 @@ namespace QuanLyKhoApi.Migrations
                 name: "KhoHang");
 
             migrationBuilder.DropTable(
-                name: "NhanVien");
+                name: "Claims");
+
+            migrationBuilder.DropTable(
+                name: "Loai");
+
+            migrationBuilder.DropTable(
+                name: "Role");
 
             migrationBuilder.DropTable(
                 name: "TaiKhoan");
 
             migrationBuilder.DropTable(
-                name: "Loai");
+                name: "NhanVien");
         }
     }
 }

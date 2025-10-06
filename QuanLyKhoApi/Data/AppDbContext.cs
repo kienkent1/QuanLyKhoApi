@@ -18,5 +18,20 @@ namespace QuanLyKhoApi.Data
         public DbSet<Role> Role { get; set; }
         public DbSet<TaiKhoan> TaiKhoan { get;set; }
         public DbSet<TrangThaiPhieu> TrangThaiPhieu { get; set; }
+        public DbSet<TaiKhoanToken> TaiKhoanToken { get; set; }
+        public DbSet<Claims> Claims { get; set; }
+        public DbSet<RoleClaim> RoleClaims { get; set; }
+        public DbSet<TaiKhoanRole> TaiKhoanRoles { get; set; }
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            //Khai báo khóa chính cho bảng liên kết khóa chính sẽ là 1 cặp ví dụ roleid = admin, claimid = 1 (all claim),
+            //sẽ không tồn tại 1 cặp như vạy trong db nx
+            modelBuilder.Entity<RoleClaim>()
+                .HasKey(rc => new { rc.RoleId, rc.ClaimId });
+            modelBuilder.Entity<TaiKhoanRole>()
+                .HasKey(tr => new { tr.TaiKhoanId, tr.RoleId });
+        }
     }
 }

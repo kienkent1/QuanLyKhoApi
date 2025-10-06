@@ -22,6 +22,21 @@ namespace QuanLyKhoApi.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("ClaimsRole", b =>
+                {
+                    b.Property<int>("ClaimsId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RolesId")
+                        .HasColumnType("text");
+
+                    b.HasKey("ClaimsId", "RolesId");
+
+                    b.HasIndex("RolesId");
+
+                    b.ToTable("ClaimsRole");
+                });
+
             modelBuilder.Entity("QuanLyKhoApi.Data.ChiTietNhap", b =>
                 {
                     b.Property<int>("MaPhieuNhap")
@@ -89,17 +104,7 @@ namespace QuanLyKhoApi.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("RoleId")
-                        .HasColumnType("text");
-
-                    b.Property<Guid?>("TaiKhoanIdNhanVien")
-                        .HasColumnType("uuid");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("RoleId");
-
-                    b.HasIndex("TaiKhoanIdNhanVien");
 
                     b.ToTable("Claims");
                 });
@@ -373,24 +378,33 @@ namespace QuanLyKhoApi.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("text");
 
-                    b.Property<Guid?>("TaiKhoanIdNhanVien")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("VaiTro")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TaiKhoanIdNhanVien");
-
                     b.ToTable("Role");
+                });
+
+            modelBuilder.Entity("QuanLyKhoApi.Data.RoleClaim", b =>
+                {
+                    b.Property<string>("RoleId")
+                        .HasColumnType("text");
+
+                    b.Property<int>("ClaimId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("RoleId", "ClaimId");
+
+                    b.HasIndex("ClaimId");
+
+                    b.ToTable("RoleClaims");
                 });
 
             modelBuilder.Entity("QuanLyKhoApi.Data.TaiKhoan", b =>
                 {
                     b.Property<Guid>("IdNhanVien")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
@@ -402,12 +416,6 @@ namespace QuanLyKhoApi.Migrations
                     b.Property<string>("Password")
                         .HasColumnType("text");
 
-                    b.Property<string>("RefreshToken")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("RefreshTokenExpiryTime")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("TenDangNhap")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -416,6 +424,45 @@ namespace QuanLyKhoApi.Migrations
                     b.HasKey("IdNhanVien");
 
                     b.ToTable("TaiKhoan");
+                });
+
+            modelBuilder.Entity("QuanLyKhoApi.Data.TaiKhoanRole", b =>
+                {
+                    b.Property<Guid>("TaiKhoanId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RoleId")
+                        .HasColumnType("text");
+
+                    b.HasKey("TaiKhoanId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("TaiKhoanRoles");
+                });
+
+            modelBuilder.Entity("QuanLyKhoApi.Data.TaiKhoanToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("ExpiryTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("IdTaiKhoan")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RefreshToken")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IdTaiKhoan");
+
+                    b.ToTable("TaiKhoanToken");
                 });
 
             modelBuilder.Entity("QuanLyKhoApi.Data.TrangThaiPhieu", b =>
@@ -438,6 +485,21 @@ namespace QuanLyKhoApi.Migrations
                     b.HasKey("MaTrangThai");
 
                     b.ToTable("TrangThaiPhieu");
+                });
+
+            modelBuilder.Entity("ClaimsRole", b =>
+                {
+                    b.HasOne("QuanLyKhoApi.Data.Claims", null)
+                        .WithMany()
+                        .HasForeignKey("ClaimsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("QuanLyKhoApi.Data.Role", null)
+                        .WithMany()
+                        .HasForeignKey("RolesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("QuanLyKhoApi.Data.ChiTietNhap", b =>
@@ -468,17 +530,6 @@ namespace QuanLyKhoApi.Migrations
                         .IsRequired();
 
                     b.Navigation("HangHoa");
-                });
-
-            modelBuilder.Entity("QuanLyKhoApi.Data.Claims", b =>
-                {
-                    b.HasOne("QuanLyKhoApi.Data.Role", null)
-                        .WithMany("Claims")
-                        .HasForeignKey("RoleId");
-
-                    b.HasOne("QuanLyKhoApi.Data.TaiKhoan", null)
-                        .WithMany("Claims")
-                        .HasForeignKey("TaiKhoanIdNhanVien");
                 });
 
             modelBuilder.Entity("QuanLyKhoApi.Data.HangHoa", b =>
@@ -541,11 +592,64 @@ namespace QuanLyKhoApi.Migrations
                     b.Navigation("NhanVien");
                 });
 
-            modelBuilder.Entity("QuanLyKhoApi.Data.Role", b =>
+            modelBuilder.Entity("QuanLyKhoApi.Data.RoleClaim", b =>
                 {
-                    b.HasOne("QuanLyKhoApi.Data.TaiKhoan", null)
-                        .WithMany("roles")
-                        .HasForeignKey("TaiKhoanIdNhanVien");
+                    b.HasOne("QuanLyKhoApi.Data.Claims", "Claim")
+                        .WithMany()
+                        .HasForeignKey("ClaimId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("QuanLyKhoApi.Data.Role", "Role")
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Claim");
+
+                    b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("QuanLyKhoApi.Data.TaiKhoan", b =>
+                {
+                    b.HasOne("QuanLyKhoApi.Data.NhanVien", "NhanVien")
+                        .WithOne("TaiKhoan")
+                        .HasForeignKey("QuanLyKhoApi.Data.TaiKhoan", "IdNhanVien")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("NhanVien");
+                });
+
+            modelBuilder.Entity("QuanLyKhoApi.Data.TaiKhoanRole", b =>
+                {
+                    b.HasOne("QuanLyKhoApi.Data.Role", "Role")
+                        .WithMany("TaiKhoanRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("QuanLyKhoApi.Data.TaiKhoan", "TaiKhoan")
+                        .WithMany("TaiKhoanRoles")
+                        .HasForeignKey("TaiKhoanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("TaiKhoan");
+                });
+
+            modelBuilder.Entity("QuanLyKhoApi.Data.TaiKhoanToken", b =>
+                {
+                    b.HasOne("QuanLyKhoApi.Data.TaiKhoan", "TaiKhoan")
+                        .WithMany("TaiKhoanTokens")
+                        .HasForeignKey("IdTaiKhoan")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TaiKhoan");
                 });
 
             modelBuilder.Entity("QuanLyKhoApi.Data.HangHoa", b =>
@@ -553,16 +657,21 @@ namespace QuanLyKhoApi.Migrations
                     b.Navigation("HinhAnhs");
                 });
 
+            modelBuilder.Entity("QuanLyKhoApi.Data.NhanVien", b =>
+                {
+                    b.Navigation("TaiKhoan");
+                });
+
             modelBuilder.Entity("QuanLyKhoApi.Data.Role", b =>
                 {
-                    b.Navigation("Claims");
+                    b.Navigation("TaiKhoanRoles");
                 });
 
             modelBuilder.Entity("QuanLyKhoApi.Data.TaiKhoan", b =>
                 {
-                    b.Navigation("Claims");
+                    b.Navigation("TaiKhoanRoles");
 
-                    b.Navigation("roles");
+                    b.Navigation("TaiKhoanTokens");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication.Cookies;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -6,8 +7,8 @@ using QuanLyKhoApi.Data;
 using QuanLyKhoApi.Services;
 using Scalar.AspNetCore;
 using System.Text;
-using test.MyHelper;
-using static test.MyHelper.GitHubImageService;
+using QuanLyKhoApi.Helper;
+using static QuanLyKhoApi.Helper.GitHubImageService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,22 +45,24 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 
     })
-    .AddCookie();
-    //.AddGoogle(option =>
-    //{
-    //    var clientId = builder.Configuration["Authentication:Google:ClientId"];
-    //    if (clientId is null) throw new ArgumentNullException("ClientId is null");
-    //    var clientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
-    //    if (clientSecret is null) throw new ArgumentNullException("ClientSecret is null");
+    .AddCookie()
+    .AddGoogle(option =>
+    {
+        var clientId = builder.Configuration["Authentication:Google:ClientId"];
+        if (clientId is null) throw new ArgumentNullException("ClientId is null");
+        var clientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+        if (clientSecret is null) throw new ArgumentNullException("ClientSecret is null");
 
-    //    option.ClientId = clientId;
-    //    option.ClientSecret = clientSecret;
-    //    option.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    //    option.Scope.Add("profile");
-    //    option.Scope.Add("email");
-    //    option.Scope.Add("openid");
+        option.ClientId = clientId;
+        option.ClientSecret = clientSecret;
+        option.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        option.Scope.Add("profile");
+        option.Scope.Add("email");
+        option.Scope.Add("openid");
 
-    //}
+        option.ClaimActions.MapJsonKey("picture", "picture");
+
+    });
 var app = builder.Build();
 app.UseCors("CorPolicy");
 

@@ -1,14 +1,16 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using QuanLyKhoApi.Data;
 using QuanLyKhoApi.Dto;
 using QuanLyKhoApi.IServices;
+using QuanLyKhoApi.Helper;
 
 namespace QuanLyKhoApi.Services
 {
-    public class NhanVienService(AppDbContext db, IMapper mapper) : INhanVienService
+    public class NhanVienService(AppDbContext db, IMapper mapper, GitHubImageService git) : INhanVienService
     {
         
 
@@ -38,13 +40,19 @@ namespace QuanLyKhoApi.Services
 
         }
 
-        public async Task< NhanVienDto?> ThemNhanVienAsync(NhanVienDto nhanVien)
+        public async Task< NhanVienDto?> ThemNhanVienAsync([FromForm]NhanVienDto nhanVien)
         {
             try
             {
                 var NewNhanVien = mapper.Map<NhanVien>(nhanVien);
+                var urlHinh = new GitHubImageService.GitHubRes();
+                if(nhanVien.Hinh != null)
+                {
+                    urlHinh = await git.UpdateOneImg(nhanVien.Hinh, "User");
+                }
                 NewNhanVien.IdNhanVien = Guid.NewGuid();
                 NewNhanVien.ngaySinh = DateTime.SpecifyKind(NewNhanVien.ngaySinh, DateTimeKind.Utc);
+                NewNhanVien.UrlHinh = urlHinh.Url;
                 await db.NhanVien.AddAsync(NewNhanVien);
                 await db.SaveChangesAsync();
                 return mapper.Map<NhanVienDto>(NewNhanVien);

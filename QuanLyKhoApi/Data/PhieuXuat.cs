@@ -24,5 +24,7 @@ namespace QuanLyKhoApi.Data
         [ForeignKey(nameof (MaKho))]
         public KhoHang KhoHang { get; set; }
 
+        [ForeignKey(nameof(MaTrangThai))]
+        public TrangThaiPhieu TrangThaiPhieu { get; set; }
     }
 }

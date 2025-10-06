@@ -14,5 +14,7 @@ namespace QuanLyKhoApi.Data
        public string? MoTa { get; set; }
         public DateTime CreateAt { get; set; } = DateTime.UtcNow;
 
+        public ICollection<PhieuNhap?> PhieuNhaps { get; set; } = new List<PhieuNhap?>();
+        public ICollection<PhieuXuat?> PhieuXuats { get; set; } = new List<PhieuXuat?>();
     }
 }
