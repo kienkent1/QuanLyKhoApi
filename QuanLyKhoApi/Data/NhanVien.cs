@@ -18,11 +18,11 @@ namespace QuanLyKhoApi.Data
         public string gioiTinh { get; set; }
         [Required]
         public string chucVu { get; set; }
-        public bool trangthai { get; set; } = true;
+        public bool trangthai { get; set; } = false;
         public string? UrlHinh { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdateAt { get; set; }
 
-
+        public TaiKhoan? TaiKhoan { get; set; }
     }
 }

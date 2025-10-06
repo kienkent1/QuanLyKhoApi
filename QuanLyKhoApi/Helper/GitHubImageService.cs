@@ -9,9 +9,9 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using static System.Net.WebRequestMethods;
-using static test.MyHelper.GitHubImageService;
+using static QuanLyKhoApi.Helper.GitHubImageService;
 
-namespace test.MyHelper
+namespace QuanLyKhoApi.Helper
 {
     public sealed  class GitHubImageService(IOptions<GitHubOptions> git)
     {
@@ -23,7 +23,7 @@ namespace test.MyHelper
         private string Repo = git.Value.Repo;
         private static readonly HttpClient client = new HttpClient();
         
-        public async Task<List<GitHubRes>> Updateimg(IFormFile[] files, string folder)
+        public  async Task<List<GitHubRes>> UpdateimgList(IFormFile[] files , string folder)
         {
     
             if (files is null) return null;
@@ -33,6 +33,12 @@ namespace test.MyHelper
                 result.Add(item);
             }
             return result;
+        }
+        public async Task<GitHubRes> UpdateOneImg(IFormFile file, string folder)
+        {
+            if (file is null) return null;
+            var res = await UpdateImgAsync(file, folder);
+            return res;
         }
         #region code lỏ
         //private async Task<string> UpdateImgAsync(IFormFile file, string folder)
