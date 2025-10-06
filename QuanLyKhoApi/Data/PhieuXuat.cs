@@ -12,8 +12,7 @@ namespace QuanLyKhoApi.Data
         public DateTime NgayXuat { get; set; } = DateTime.UtcNow;
         [Required]
         public Guid MaNV{ get; set; } 
-        [Required]
-        public int MaKho { get; set; } 
+
         [Required]
         public int MaTrangThai { get; set; } 
         public string? GhiChu { get; set; }
@@ -21,8 +20,6 @@ namespace QuanLyKhoApi.Data
         [ForeignKey(nameof(MaNV))]
         public NhanVien NhanVien { get; set; }
 
-        [ForeignKey(nameof (MaKho))]
-        public KhoHang KhoHang { get; set; }
 
         [ForeignKey(nameof(MaTrangThai))]
         public TrangThaiPhieu TrangThaiPhieu { get; set; }

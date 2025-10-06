@@ -16,13 +16,10 @@ namespace QuanLyKhoApi.Data
         [Required]
         public decimal DonGia { get; set; }
 
-        [Required]
-        public int MaKho { get; set; }
 
         [ForeignKey(nameof(MaHH))]
         public HangHoa HangHoa { get; set; }
 
-        [ForeignKey(nameof(MaKho))]
-        public KhoHang KhoHang { get; set; }
+
     }
 }

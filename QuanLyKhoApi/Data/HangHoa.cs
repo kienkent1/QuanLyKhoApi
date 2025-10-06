@@ -16,8 +16,7 @@ namespace QuanLyKhoApi.Data
         public decimal GiaBan { get; set; }
         [Required]
         public int SoLuongTon { get; set; }
-        [Required]
-        public string MaKho {  get; set; }
+
         [Required]
         public int IdLoai { get; set; }
 

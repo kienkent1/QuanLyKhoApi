@@ -12,5 +12,7 @@ namespace QuanLyKhoApi.Data
         public string TenLoai { get; set; }
         public string? MoTa { get; set; }
         public string? HinhAnh { get; set; }
+        public bool Deleted { get; set; } = false;
+        public DateTime? DeletedAt { get; set; }
     }
 }
