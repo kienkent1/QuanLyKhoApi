@@ -16,6 +16,8 @@ namespace QuanLyKhoApi.Data
         public decimal GiaBan { get; set; }
         [Required]
         public int SoLuongTon { get; set; }
+        public bool Deleted { get; set; } = false;
+        public DateTime? DeletedAt { get; set; }
 
         [Required]
         public int IdLoai { get; set; }

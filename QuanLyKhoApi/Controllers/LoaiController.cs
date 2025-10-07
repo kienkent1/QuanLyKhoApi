@@ -39,7 +39,7 @@ namespace QuanLyKhoApi.Controllers
             return vali;
         }
         [HttpPost("ThemLoai")]
-        public async Task<IActionResult> ThemLoai([FromBody] LoaiDto dto)
+        public async Task<IActionResult> ThemLoai([FromForm] LoaiDto dto )
         {
             ValidateLoaiDto validate = ValidateLoai(dto);
             if (!validate.IsValid)
@@ -57,7 +57,7 @@ namespace QuanLyKhoApi.Controllers
             }
         }
         [HttpPut("SuaLoai/{id}")]
-        public async Task<IActionResult> SuaLoai(int id, [FromBody] LoaiDto dto)
+        public async Task<IActionResult> SuaLoai(int id, [FromForm] LoaiDto dto)
         {
             var validate = ValidateLoai(dto);
             if (!validate.IsValid)

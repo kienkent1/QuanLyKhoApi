@@ -191,6 +191,7 @@ namespace QuanLyKhoApi.Services
             GoogleJsonWebSignature.Payload payload;
             try
             {
+                var idtk = configuration.GetValue<string>("Authentication:Google:ClientId")!;
                 payload = await GoogleJsonWebSignature.ValidateAsync(
                     dto.IdToken,
                     new GoogleJsonWebSignature.ValidationSettings

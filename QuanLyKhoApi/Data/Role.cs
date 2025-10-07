@@ -9,7 +9,8 @@ namespace QuanLyKhoApi.Data
         public string Id { get; set; }
    
         public string VaiTro { get; set; }
-
+        public bool Deleted { get; set; } = false;
+        public DateTime? DeletedAt { get; set; }
         public ICollection<Claims> Claims { get; set; } = new List<Claims>();
         public ICollection<TaiKhoanRole> TaiKhoanRoles { get; set; } = new List<TaiKhoanRole>();
 

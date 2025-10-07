@@ -80,14 +80,19 @@ namespace QuanLyKhoApi.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
+        public class GoogleRegisterRequest
+        {
+            public RegisterGG GG { get; set; }
+            public GoogleAuthDto Dto { get; set; }
+        }
 
         [HttpPost("google-register")]
-        public async Task<IActionResult> GoogleRegister([FromBody] RegisterGG gg, [FromBody] GoogleAuthDto dto)
+        public async Task<IActionResult> GoogleRegister([FromBody] GoogleRegisterRequest req)
         {
             try
             {
-                if (dto is null || gg is null) return BadRequest("Vui lòng điền đầy đủ thông tin");
-                var newAcc = await autsv.RegisterGoogle(gg, dto);
+                if (req.Dto is null || req.GG is null) return BadRequest("Vui lòng điền đầy đủ thông tin");
+                var newAcc = await autsv.RegisterGoogle(req.GG, req.Dto);
                 if(newAcc is null) return BadRequest("lỗi: không thể tạo tài khoản");
                 return Ok(newAcc);
             }
