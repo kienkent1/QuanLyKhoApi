@@ -12,8 +12,9 @@ namespace QuanLyKhoApi.Data
         [Required, MaxLength(15)]
         public string DienThoai { get; set; }
         public string? Email { get; set; }
+        public string? HinhAnh { get; set; }
         public DateTime CreateAt { get; set; } = DateTime.UtcNow;
         public bool Deleted { get; set; } = false;
-        public DateTime? Deleted_at { get; set; }
+        public DateTime? DeletedAt { get; set; }
     }
 }

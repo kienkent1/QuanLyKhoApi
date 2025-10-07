@@ -9,7 +9,7 @@ namespace QuanLyKhoApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class TestImgController(GitHubImageService _github, AppDbContext db) : ControllerBase
+    public class TestImgController(GitHubImageService _github, AppDbContext db, IConfiguration configuration) : ControllerBase
     {
         [HttpPut]
         public async Task<IActionResult> Testimg([FromForm ] IFormFile[] files,[FromForm] string folder)
@@ -23,7 +23,7 @@ namespace QuanLyKhoApi.Controllers
         {
             var status = db.PhieuNhap.AsQueryable();
 
-           var result = status.Select(t => t.TrangThaiPhieu.TenTrangThai);
+            var result = status.Select(t => t.TrangThaiPhieu.TenTrangThai);
             return Ok(result);
         }
 

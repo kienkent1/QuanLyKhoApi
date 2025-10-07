@@ -2,11 +2,12 @@
 using Microsoft.EntityFrameworkCore;
 using QuanLyKhoApi.Data;
 using QuanLyKhoApi.Dto;
+using QuanLyKhoApi.Helper;
 using QuanLyKhoApi.IServices;
 
 namespace QuanLyKhoApi.Services
 {
-    public class LoaiService(AppDbContext db, IMapper mapper) : ILoaiService
+    public class LoaiService(AppDbContext db, IMapper mapper, GitHubImageService git) : ILoaiService
     {
         public async Task<LoaiDto?> ThemLoaiAsync(LoaiDto loai)
         {
@@ -15,7 +16,14 @@ namespace QuanLyKhoApi.Services
               {
                 return null;
             }
+            
+            
             var newLoai = mapper.Map<Loai>(loai);
+            if (loai.HinhAnh is not null)
+            {
+                var path = await git.UpdateOneImg(loai.HinhAnh, "Loai");    
+                newLoai.HinhAnh = path.Url;
+            }
             await db.Loai.AddAsync(newLoai);
             await db.SaveChangesAsync();
             return mapper.Map<LoaiDto>(newLoai);
@@ -31,6 +39,11 @@ namespace QuanLyKhoApi.Services
             if (existingLoai is not null)
             {
                 return null;
+            }
+            if (dto.HinhAnh is not null)
+            {
+                var path = await git.UpdateOneImg(dto.HinhAnh, "Loai");
+                Loai.HinhAnh = path.Url;
             }
             mapper.Map(dto, Loai);
             await db.SaveChangesAsync();

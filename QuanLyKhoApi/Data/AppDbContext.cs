@@ -21,6 +21,7 @@ namespace QuanLyKhoApi.Data
         public DbSet<Claims> Claims { get; set; }
         public DbSet<RoleClaim> RoleClaims { get; set; }
         public DbSet<TaiKhoanRole> TaiKhoanRoles { get; set; }
+        public DbSet<ComfirmAccount> ComfirmAccounts { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

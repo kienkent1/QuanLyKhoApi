@@ -18,5 +18,6 @@ namespace QuanLyKhoApi.Data
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public ICollection<TaiKhoanRole> TaiKhoanRoles { get; set; } = new List<TaiKhoanRole>();
         public ICollection<TaiKhoanToken> TaiKhoanTokens { get; set; } = new List<TaiKhoanToken>();
+        public ComfirmAccount? ComfirmAccount { get; set; }
     }
 }
