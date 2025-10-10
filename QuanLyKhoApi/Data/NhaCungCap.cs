@@ -1,11 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 namespace QuanLyKhoApi.Data
 {
     public class NhaCungCap
     {
         [Key]
-        [Required]
-        public string MaNCC { get; set; }
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int MaNCC { get; set; }
         [Required, MaxLength(200)]
         public string TenNCC { get; set; }
         public string? DiaChi { get; set; }

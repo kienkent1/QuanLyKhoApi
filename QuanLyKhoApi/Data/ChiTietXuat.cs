@@ -4,18 +4,19 @@ namespace QuanLyKhoApi.Data
 {
     public class ChiTietXuat
     {
-        [Key, ForeignKey(nameof(PhieuXuat))]
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int MaPhieuXuat { get; set; }
 
         [Required]
-        public string MaHH { get; set; }
+        public Guid MaCauHinh { get; set; }
         [Required]
         public int SoLuong { get; set; }
 
         [Required]
         public decimal DonGia { get; set; }
 
-        [ForeignKey(nameof(MaHH))]
-        public HangHoa HangHoa { get; set; }
+        [ForeignKey(nameof(MaCauHinh))]
+        public CauHinh CauHinh { get; set; }
     }
 }
