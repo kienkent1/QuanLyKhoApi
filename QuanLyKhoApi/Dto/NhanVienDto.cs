@@ -19,6 +19,7 @@ namespace QuanLyKhoApi.Dto
         public string sdt { get; set; }
 
         public string? diaChi { get; set; }
+        public IFormFile? Hinh { get; set; }
 
         [Required(ErrorMessage = "Ngày sinh là bắt buộc")]
         public DateTime ngaySinh { get; set; }

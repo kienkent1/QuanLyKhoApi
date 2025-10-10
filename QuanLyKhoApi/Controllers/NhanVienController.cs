@@ -18,26 +18,33 @@ namespace QuanLyKhoApi.Controllers
             public bool IsValid { get; set; } = true;
             public string Message { get; set; }
         }
-        private ValidateNhanVienDto ValitdateNhanVien(NhanVienDto dto)
+        private async Task<ValidateNhanVienDto> ValitdateNhanVien(NhanVienDto dto)
         {
             var vali = new ValidateNhanVienDto();
             if (dto == null)
             {
                 vali.IsValid = false;
                 vali.Message = "Vui lòng điền đầy đủ thông tin bắt buộc";
-
+                return vali;
             }
             if (dto.ngaySinh.AddYears(15) > DateTime.Today)
             {
                 vali.IsValid = false;
                 vali.Message = "Bạn Không đủ tuổi";
+                return vali;
             }
             if (dto.gioiTinh != "Nam" || dto.gioiTinh != "Nữ")
             {
                 vali.IsValid = false;
                 vali.Message = "Vui lòng chọn đúng định dạng giới tính";
+                return vali;
             }
-
+            var isEmailExit = await db.NhanVien.AnyAsync(u => u.email ==  dto.email);
+            if (isEmailExit) {
+                vali.IsValid = false;
+                vali.Message = "Email đã tồn tại";
+                return vali;
+            }
             return vali;
         }
         [HttpGet]
@@ -67,7 +74,7 @@ namespace QuanLyKhoApi.Controllers
         [HttpPost("ThemNhanVien")]
         public async Task<IActionResult> ThemNhanVien([FromBody] NhanVienDto dto)
         {
-            ValidateNhanVienDto Validate = ValitdateNhanVien(dto);
+            ValidateNhanVienDto Validate = await ValitdateNhanVien(dto);
             if (Validate.IsValid)
             {
                 return BadRequest(Validate.Message);

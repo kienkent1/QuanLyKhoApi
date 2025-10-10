@@ -4,11 +4,11 @@ using QuanLyKhoApi.Dto;
 
 namespace QuanLyKhoApi.Profiles
 {
-    public class KhoHangProfile : Profile
+    public class LoaiProfile : Profile
     {
-        public KhoHangProfile()
+        public LoaiProfile()
         {
-            CreateMap<KhoHang, KhoHangDto>().ReverseMap();
+            CreateMap<Loai, LoaiDto>().ReverseMap();
         }
     }
 }

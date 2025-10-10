@@ -6,14 +6,14 @@ namespace QuanLyKhoApi.Data
     {
         [Key]
         [Required]
-        public string Id { get; set; }
+        public Guid Id { get; set; } = Guid.NewGuid();
         [Required]
-        public string MaHH { get; set; }
+        public Guid CauHinhId { get; set; }
         [Required]
         public string Url { get; set; }
         public DateTime CreateAt { get; set; } = DateTime.UtcNow;
 
-        [ForeignKey(nameof(MaHH))]
-        public HangHoa HangHoa { get; set; }
+        [ForeignKey(nameof(CauHinhId))]
+        public CauHinh CauHinh { get; set; }
     }
 }

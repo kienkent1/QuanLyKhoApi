@@ -6,24 +6,34 @@ namespace QuanLyKhoApi.Data
     public class HangHoa
     {
         [Key]
-        public string MaHH { get; set; }
+        public Guid MaHH { get; set; } = Guid.NewGuid();
+
         [Required, MaxLength(200) ]
-        public string TenHH { get; set; }
+        public string Model { get; set; }
+
         public string? MoTa { get; set; }
-        [Required]
+
+        [Required, MaxLength(30)]
         public string DonViTinh { get; set; }
+
+         [Required]
+        public int NhaCungCapId { get; set; }
+        [ForeignKey(nameof(NhaCungCapId))]
+        public NhaCungCap NhaCungCap { get; set; }
+
         [Required]
-        public decimal GiaBan { get; set; }
-        [Required]
-        public int SoLuongTon { get; set; }
-        [Required]
-        public string MaKho {  get; set; }
+        public int SoLuongTon { get; set; } 
+
+        public bool Deleted { get; set; } = false;
+        public DateTime? DeletedAt { get; set; }
+       
         [Required]
         public int IdLoai { get; set; }
 
         [ForeignKey(nameof(IdLoai))]
         public Loai loai { get; set; }
-        public ICollection<HinhAnhHH> HinhAnhs { get; set; } = new List<HinhAnhHH>();
+
+        public ICollection<CauHinh> CauHinhs { get; set; } = new List<CauHinh>();
 
     }
 }

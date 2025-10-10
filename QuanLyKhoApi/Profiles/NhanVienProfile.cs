@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using QuanLyKhoApi.Data;
 using QuanLyKhoApi.Dto;
-using QuanLyKhoApi.Models;
+
 
 namespace QuanLyKhoApi.Profiles
 {

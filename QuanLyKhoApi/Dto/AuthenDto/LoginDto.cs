@@ -1,4 +1,4 @@
-﻿namespace QuanLyKhoApi.Models
+﻿namespace QuanLyKhoApi.Dto.AuthenDto
 {
     public class LoginDto
     {

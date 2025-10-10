@@ -5,16 +5,14 @@ namespace QuanLyKhoApi.Data
 {
     public class Role
     {
-        [Key]
+        [Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public string Id { get; set; }
    
-        public Guid IdTaiKhoan { get; set; }
-        [Required]
         public string VaiTro { get; set; }
-        public string? Quyen { get; set; }
-
-        [ForeignKey(nameof(IdTaiKhoan))]
-        public TaiKhoan TaiKhoan { get; set; }
+        public bool Deleted { get; set; } = false;
+        public DateTime? DeletedAt { get; set; }
+        public ICollection<Claims> Claims { get; set; } = new List<Claims>();
+        public ICollection<TaiKhoanRole> TaiKhoanRoles { get; set; } = new List<TaiKhoanRole>();
 
     }
 }
