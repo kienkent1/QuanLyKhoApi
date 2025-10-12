@@ -1,4 +1,5 @@
-﻿using QuanLyKhoApi.IServices;
+﻿using QuanLyKhoApi.Helper;
+using QuanLyKhoApi.IServices;
 
 namespace QuanLyKhoApi.Services
 {
@@ -9,6 +10,8 @@ namespace QuanLyKhoApi.Services
             services.AddScoped<INhanVienService, NhanVienService>();
             services.AddScoped<ILoaiService, LoaiService>();
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<GitHubImageService>();
+            services.AddScoped<Ironbarcode>();
             return services;
         }
     }

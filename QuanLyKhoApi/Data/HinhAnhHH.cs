@@ -11,6 +11,7 @@ namespace QuanLyKhoApi.Data
         public Guid CauHinhId { get; set; }
         [Required]
         public string Url { get; set; }
+        public int? Stt { get; set; }
         public DateTime CreateAt { get; set; } = DateTime.UtcNow;
 
         [ForeignKey(nameof(CauHinhId))]
