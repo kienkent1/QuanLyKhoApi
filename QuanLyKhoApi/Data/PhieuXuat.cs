@@ -16,6 +16,7 @@ namespace QuanLyKhoApi.Data
         [Required]
         public int MaTrangThai { get; set; } 
         public string? GhiChu { get; set; }
+        public decimal? GiaXuat { get; set; }
         [Required]
         public Guid MaHH { get; set; }
         [ForeignKey(nameof(MaHH))]

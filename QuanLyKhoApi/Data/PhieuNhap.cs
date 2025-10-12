@@ -13,7 +13,7 @@ namespace QuanLyKhoApi.Data
         public Guid MaNV { get; set; }
         [Required]
         public string MaNCC { get; set; }
-
+        public decimal? GiaNhap { get; set; }
         [Required]
         public Guid MaHH { get; set; }
         [ForeignKey(nameof(MaHH))]

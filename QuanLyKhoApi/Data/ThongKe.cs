@@ -10,8 +10,10 @@ namespace QuanLyKhoApi.Data
         public int Id { get; set; }
         public int Year { get; set; }
         public int Month { get; set; }
-        public decimal GiaNhap { get; set; }
-        public decimal GiaXuat { get; set; }
+        public int SoPhieuluongNhap { get; set; }
+        public int SoPhieuluongXuat { get; set; }
+        public decimal TongGiaNhap { get; set; }
+        public decimal TongGiaXuat { get; set; }
         public DateTime? UpdateAt { get; set; }
     }
 }
