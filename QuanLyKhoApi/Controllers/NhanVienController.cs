@@ -68,7 +68,7 @@ namespace QuanLyKhoApi.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(500, ex.Message);
             }
         }
         [HttpPost("ThemNhanVien")]
@@ -82,30 +82,55 @@ namespace QuanLyKhoApi.Controllers
 
             try
             {
-                var NewNhanVien = await service.ThemNhanVienAsync(dto);
-                return Ok(NewNhanVien);
+                var result = await service.ThemNhanVienAsync(dto);
+                return StatusCode(result.StatusCode, new
+                {
+                    success = result.Success,
+                    message = result.Message,
+                    data = result.Data
+                });
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(500, ex.Message);
             }
         }
 
         [HttpPatch("UpdateNhanVien/{id}")]
-        public async Task<IActionResult> updateNhanVien([FromQuery] Guid id, [FromBody] NhanVienDto dto)
+        public async Task<IActionResult> updateNhanVien([FromQuery] Guid id, [FromForm] UpdateNhanVienDto dto)
         {
             try
             {
-                var updateNV = await service.UpdateNhanVienAsync(id, dto);
-                return Ok(updateNV);
+                var result = await service.UpdateNhanVienAsync(id, dto);
+                return StatusCode(result.StatusCode, new
+                {
+                    success = result.Success,
+                    message = result.Message,
+                    data = result.Data
+                });
             }
             catch (Exception e)
             {
-                return BadRequest(e.Message);
+                return StatusCode(500, e.Message);
             }
-
-
-
+        }
+        [HttpPatch("UpdateAvatar/{id}")]
+        public async Task<IActionResult> UpdateAvatarNV([FromRoute] string id, IFormFile file)
+        {
+            try
+            {
+                var result = await service.UpdateAvatarNV(id, file);
+                return StatusCode(result.StatusCode, new
+                {
+                    success = result.Success,
+                    message = result.Message,
+                    data = result.Data
+                });
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, e.Message);
+            }
         }
 
         [HttpGet("ProfileUser/{id}")]
@@ -113,12 +138,17 @@ namespace QuanLyKhoApi.Controllers
         {
             try
             {
-                var profile = await service.ProfileUser(id);
-                return Ok(profile);
+                var result = await service.ProfileUser(id);
+                return StatusCode(result.StatusCode, new
+                {
+                    success = result.Success,
+                    message = result.Message,
+                    data = result.Data
+                });
             }
             catch (Exception e)
             {
-                return BadRequest(e.Message);
+                return StatusCode(500, e.Message);
             }
         }
 
@@ -127,12 +157,17 @@ namespace QuanLyKhoApi.Controllers
         {
             try
             {
-                var changePass = await service.ChangePassword(Pass, id);
-                return Ok(changePass);
+                var result = await service.ChangePassword(Pass, id);
+                return StatusCode(result.StatusCode, new
+                {
+                    success = result.Success,
+                    message = result.Message,
+                    data = result.Data
+                });
             }
             catch (Exception e)
             {
-                return BadRequest(e.Message);
+                return StatusCode(500, e.Message);
             }
         }
     }
