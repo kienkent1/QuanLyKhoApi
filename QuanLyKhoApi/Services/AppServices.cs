@@ -10,6 +10,8 @@ namespace QuanLyKhoApi.Services
             services.AddScoped<INhanVienService, NhanVienService>();
             services.AddScoped<ILoaiService, LoaiService>();
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IHangHoaService, HangHoaService>();
+            services.AddScoped<INhaCungCapService, NhaCungCapService>();
             services.AddScoped<GitHubImageService>();
             services.AddScoped<Ironbarcode>();
             return services;

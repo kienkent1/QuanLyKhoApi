@@ -2,53 +2,44 @@
 using Microsoft.EntityFrameworkCore;
 using QuanLyKhoApi.Data;
 using QuanLyKhoApi.Dto;
-using QuanLyKhoApi.Helper;
 using QuanLyKhoApi.IServices;
 
 namespace QuanLyKhoApi.Services
 {
-    public class LoaiService(AppDbContext db, IMapper mapper, GitHubImageService git) : ILoaiService
+    public class LoaiService(AppDbContext db, IMapper mapper) : ILoaiService
     {
         public async Task<LoaiDto?> ThemLoaiAsync(LoaiDto loai)
         {
-           var existingLoai = await db.Loai.FirstOrDefaultAsync(l => l.TenLoai == loai.TenLoai);
-              if(existingLoai is not null)
-              {
+            var existingLoai = await db.Loai.FirstOrDefaultAsync(l => l.TenLoai == loai.TenLoai);
+            if (existingLoai is not null)
+            {
                 return null;
             }
-            
-            
+
             var newLoai = mapper.Map<Loai>(loai);
-            if (loai.HinhAnh is not null)
-            {
-                var path = await git.UpdateOneImg(loai.HinhAnh, "Loai");    
-                newLoai.HinhAnh = path.Url;
-            }
             await db.Loai.AddAsync(newLoai);
             await db.SaveChangesAsync();
             return mapper.Map<LoaiDto>(newLoai);
         }
+
         public async Task<LoaiDto?> SuaLoai(int id, LoaiDto dto)
         {
-            var Loai = await db.Loai.FirstOrDefaultAsync(l => l.Id == id);
-            if (Loai == null)
+            var loai = await db.Loai.FirstOrDefaultAsync(l => l.Id == id);
+            if (loai == null)
             {
                 return null;
             }
+
             var existingLoai = await db.Loai.FirstOrDefaultAsync(l => l.TenLoai == dto.TenLoai && l.Id != id);
             if (existingLoai is not null)
             {
                 return null;
             }
-            if (dto.HinhAnh is not null)
-            {
-                var path = await git.UpdateOneImg(dto.HinhAnh, "Loai");
-                Loai.HinhAnh = path.Url;
-            }
-            mapper.Map(dto, Loai);
+            mapper.Map(dto, loai);
             await db.SaveChangesAsync();
-            return mapper.Map<LoaiDto>(Loai);
+            return mapper.Map<LoaiDto>(loai);
         }
+
         public async Task<List<LoaiDto>> GetLoai(string? query)
         {
             var loaiQuery = db.Loai.AsQueryable();
@@ -65,6 +56,7 @@ namespace QuanLyKhoApi.Services
             var result = await loaiQuery.Select(l => mapper.Map<LoaiDto>(l)).ToListAsync();
             return result;
         }
+
         public async Task<LoaiDto?> GetLoaiById(int id)
         {
             var dto = await db.Loai.Where(l => l.Id == id)
@@ -72,6 +64,7 @@ namespace QuanLyKhoApi.Services
                 .FirstOrDefaultAsync();
             return dto;
         }
+
         public async Task<bool> XoaLoaiTamAsync(int id)
         {
             var loai = await db.Loai.FirstOrDefaultAsync(l => l.Id == id);

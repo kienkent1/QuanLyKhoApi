@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace QuanLyKhoApi.Data
 {
@@ -8,7 +9,7 @@ namespace QuanLyKhoApi.Data
         [Key]
         public Guid MaHH { get; set; } = Guid.NewGuid();
 
-        [Required, MaxLength(200) ]
+        [Required, MaxLength(200)]
         public string Model { get; set; }
 
         public string? MoTa { get; set; }
@@ -16,24 +17,24 @@ namespace QuanLyKhoApi.Data
         [Required, MaxLength(30)]
         public string DonViTinh { get; set; }
 
-         [Required]
+        [Required]
         public int NhaCungCapId { get; set; }
         [ForeignKey(nameof(NhaCungCapId))]
         public NhaCungCap NhaCungCap { get; set; }
 
         [Required]
-        public int SoLuongTon { get; set; } 
+        public int SoLuongTon { get; set; }
 
         public bool Deleted { get; set; } = false;
         public DateTime? DeletedAt { get; set; }
-       
+
         [Required]
         public int IdLoai { get; set; }
 
         [ForeignKey(nameof(IdLoai))]
         public Loai loai { get; set; }
 
+        [JsonIgnore] 
         public ICollection<CauHinh> CauHinhs { get; set; } = new List<CauHinh>();
-
     }
 }
