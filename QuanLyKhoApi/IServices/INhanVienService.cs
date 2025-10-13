@@ -1,14 +1,17 @@
 ﻿using QuanLyKhoApi.Data;
 using QuanLyKhoApi.Dto;
+using QuanLyKhoApi.Helper;
 
 namespace QuanLyKhoApi.IServices
 {
     public interface INhanVienService
     {
-        Task <NhanVienDto?> ThemNhanVienAsync(NhanVienDto nhanVien);
+        Task <ServiceResult< NhanVienDto>> ThemNhanVienAsync(NhanVienDto nhanVien);
         Task <IQueryable<NhanVien>> GetNhanVienAsync();
-        Task<NhanVienDto> UpdateNhanVienAsync(Guid id, NhanVienDto dto);
-        Task<ProfileUserDto> ProfileUser(string id);
-        Task<string> ChangePassword(ChangePassworDto Pass, Guid id);
+        Task<ServiceResult<UpdateNhanVienDto>> UpdateNhanVienAsync(Guid id, UpdateNhanVienDto dto);
+        Task<ServiceResult<ProfileUserDto>> ProfileUser(string id);
+        Task<ServiceResult<string>> ChangePassword(ChangePassworDto Pass, Guid id);
+        Task<ServiceResult<string>> UpdateAvatarNV(string id, IFormFile file);
     }
 }
+
