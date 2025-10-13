@@ -1,17 +1,18 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace QuanLyKhoApi.Data
 {
     public class CauHinh
     {
         [Key]
-        public Guid Id{ get; set; } = Guid.NewGuid();
-
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         public Guid MaHH { get; set; }
 
         [ForeignKey(nameof(MaHH))]
+        [JsonIgnore]
         public HangHoa HangHoa { get; set; }
 
         [Required]
@@ -33,6 +34,8 @@ namespace QuanLyKhoApi.Data
         public string? Rom { get; set; }
 
         public int? SoLuongHidden { get; set; } = 0;
+
+        [JsonIgnore]
         public ICollection<HinhAnhHH> HinhAnhs { get; set; } = new List<HinhAnhHH>();
 
         public bool Deleted { get; set; } = false;
