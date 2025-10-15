@@ -1,10 +1,13 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuanLyKhoApi.Data;
 using QuanLyKhoApi.Dto;
+using QuanLyKhoApi.Helper;
 using QuanLyKhoApi.IServices;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace QuanLyKhoApi.Controllers
@@ -39,8 +42,9 @@ namespace QuanLyKhoApi.Controllers
                 vali.Message = "Vui lòng chọn đúng định dạng giới tính";
                 return vali;
             }
-            var isEmailExit = await db.NhanVien.AnyAsync(u => u.email ==  dto.email);
-            if (isEmailExit) {
+            var isEmailExit = await db.NhanVien.AnyAsync(u => u.email == dto.email);
+            if (isEmailExit)
+            {
                 vali.IsValid = false;
                 vali.Message = "Email đã tồn tại";
                 return vali;
@@ -102,12 +106,7 @@ namespace QuanLyKhoApi.Controllers
             try
             {
                 var result = await service.UpdateNhanVienAsync(id, dto);
-                return StatusCode(result.StatusCode, new
-                {
-                    success = result.Success,
-                    message = result.Message,
-                    data = result.Data
-                });
+                return MyStatusCodeBase.MyStatusCode(this, result);
             }
             catch (Exception e)
             {
@@ -120,12 +119,7 @@ namespace QuanLyKhoApi.Controllers
             try
             {
                 var result = await service.UpdateAvatarNV(id, file);
-                return StatusCode(result.StatusCode, new
-                {
-                    success = result.Success,
-                    message = result.Message,
-                    data = result.Data
-                });
+                return MyStatusCodeBase.MyStatusCode(this, result);
             }
             catch (Exception e)
             {
@@ -133,18 +127,15 @@ namespace QuanLyKhoApi.Controllers
             }
         }
 
-        [HttpGet("ProfileUser/{id}")]
-        public async Task<IActionResult> ProfileUser([FromRoute] string id)
+        [Authorize]
+        [HttpGet("ProfileUser")]
+        public async Task<IActionResult> ProfileUser()
         {
+            var id = User.FindFirstValue(ClaimTypes.NameIdentifier).ToString();
             try
             {
                 var result = await service.ProfileUser(id);
-                return StatusCode(result.StatusCode, new
-                {
-                    success = result.Success,
-                    message = result.Message,
-                    data = result.Data
-                });
+                return MyStatusCodeBase.MyStatusCode(this, result);
             }
             catch (Exception e)
             {
@@ -164,6 +155,22 @@ namespace QuanLyKhoApi.Controllers
                     message = result.Message,
                     data = result.Data
                 });
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, e.Message);
+            }
+        }
+
+        [Authorize]
+        [HttpGet("GetClaimUser")]
+        public async Task<IActionResult> GetClaimUser()
+        {
+            var id = User.FindFirstValue(ClaimTypes.NameIdentifier).ToString();
+            try
+            {
+                var result = await service.GetClaimUser(id);
+                return MyStatusCodeBase.MyStatusCode(this, result);
             }
             catch (Exception e)
             {
