@@ -34,6 +34,21 @@ namespace QuanLyKhoApi.Data
                 .HasKey(rc => new { rc.RoleId, rc.ClaimId });
             modelBuilder.Entity<TaiKhoanRole>()
                 .HasKey(tr => new { tr.TaiKhoanId, tr.RoleId });
+
+            //seeds data
+            modelBuilder.Entity<Role>().HasData(
+                new Role { Id = "user", VaiTro = "User" },
+                new Role { Id = "admin", VaiTro = "Admin" }
+            );
+            modelBuilder.Entity<Claims>().HasData(
+                new Claims { Id = 1, Quyen = "User" },
+                new Claims { Id = 2, Quyen = "Admin" }
+
+                );
+            modelBuilder.Entity<RoleClaim>().HasData(
+                new RoleClaim { RoleId = "user", ClaimId = 1 },
+                new RoleClaim { RoleId = "admin", ClaimId = 2 }
+                );
         }
     }
 }

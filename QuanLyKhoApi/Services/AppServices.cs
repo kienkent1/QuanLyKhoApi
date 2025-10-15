@@ -14,6 +14,7 @@ namespace QuanLyKhoApi.Services
             services.AddScoped<INhaCungCapService, NhaCungCapService>();
             services.AddScoped<GitHubImageService>();
             services.AddScoped<Ironbarcode>();
+            services.AddScoped<IThongKeServices, ThongKeService>();
             return services;
         }
     }

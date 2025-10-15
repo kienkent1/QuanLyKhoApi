@@ -12,19 +12,19 @@ namespace QuanLyKhoApi.Services
 {
     public class NhanVienService(AppDbContext db, IMapper mapper, GitHubImageService git) : INhanVienService
     {
-        
+
 
         public async Task<IQueryable<NhanVien>> GetNhanVienAsync()
         {
-            var nhanVien =   db.NhanVien.AsQueryable();
+            var nhanVien = db.NhanVien.AsQueryable();
             return nhanVien;
         }
 
         public async Task<ServiceResult<ProfileUserDto>> ProfileUser(string id)
-        {       
-             var profile = await db.NhanVien.FirstOrDefaultAsync(nv => nv.IdNhanVien.ToString() == id);
-            var userName = await db.TaiKhoan.FirstOrDefaultAsync(tk => tk.IdNhanVien.ToString() == id);  
-            if(profile is null || userName is null) return ServiceResult<ProfileUserDto>
+        {
+            var profile = await db.NhanVien.FirstOrDefaultAsync(nv => nv.IdNhanVien.ToString() == id);
+            var userName = await db.TaiKhoan.FirstOrDefaultAsync(tk => tk.IdNhanVien.ToString() == id);
+            if (profile is null || userName is null) return ServiceResult<ProfileUserDto>
                     .Fail("Nhân viên không tồn tại", 404);
             var result = new ProfileUserDto
             {
@@ -42,14 +42,14 @@ namespace QuanLyKhoApi.Services
 
         }
 
-        public async Task<ServiceResult< NhanVienDto>> ThemNhanVienAsync(NhanVienDto nhanVien)
+        public async Task<ServiceResult<NhanVienDto>> ThemNhanVienAsync(NhanVienDto nhanVien)
         {
             try
             {
-                if(nhanVien is null) return ServiceResult<NhanVienDto>.Fail("Dữ liệu không hợp lệ", 400);
+                if (nhanVien is null) return ServiceResult<NhanVienDto>.Fail("Dữ liệu không hợp lệ", 400);
                 var NewNhanVien = mapper.Map<NhanVien>(nhanVien);
                 var urlHinh = new GitHubImageService.GitHubRes();
-                if(nhanVien.Hinh != null)
+                if (nhanVien.Hinh != null)
                 {
                     urlHinh = await git.UpdateOneImg(nhanVien.Hinh, "User");
                 }
@@ -58,18 +58,19 @@ namespace QuanLyKhoApi.Services
                 NewNhanVien.UrlHinh = urlHinh.Url;
                 await db.NhanVien.AddAsync(NewNhanVien);
                 await db.SaveChangesAsync();
-                return ServiceResult<NhanVienDto>.Ok( mapper.Map<NhanVienDto>(NewNhanVien));
+                return ServiceResult<NhanVienDto>.Ok(mapper.Map<NhanVienDto>(NewNhanVien));
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 return ServiceResult<NhanVienDto>.Fail($"Lỗi: {ex.Message}", 500);
             }
         }
 
         public async Task<ServiceResult<UpdateNhanVienDto>> UpdateNhanVienAsync(Guid id, UpdateNhanVienDto dto)
         {
-            if(dto is null) return ServiceResult< UpdateNhanVienDto>.Fail("Không có dữ liệu để cập nhật", 400);
+            if (dto is null) return ServiceResult<UpdateNhanVienDto>.Fail("Không có dữ liệu để cập nhật", 400);
             var nv = await db.NhanVien.FirstOrDefaultAsync(nv => nv.IdNhanVien == id);
-            if (nv is null) return ServiceResult< UpdateNhanVienDto>.Fail("Không tìm thấy nhân viên", 404);
+            if (nv is null) return ServiceResult<UpdateNhanVienDto>.Fail("Không tìm thấy nhân viên", 404);
 
             if (!string.IsNullOrEmpty(dto.TenNhanVien))
                 nv.TenNhanVien = dto.TenNhanVien;
@@ -95,17 +96,17 @@ namespace QuanLyKhoApi.Services
             nv.trangthai = dto.trangthai;
             db.NhanVien.Update(nv);
             db.SaveChanges();
-            return ServiceResult< UpdateNhanVienDto>.Ok(dto);
+            return ServiceResult<UpdateNhanVienDto>.Ok(dto);
         }
 
         public async Task<ServiceResult<string>> ChangePassword(ChangePassworDto Pass, Guid id)
         {
             var userPass = await db.TaiKhoan.FirstOrDefaultAsync(tk => tk.IdNhanVien == id);
-            var user = await db.NhanVien.FirstOrDefaultAsync(us => us.IdNhanVien == id) ;
+            var user = await db.NhanVien.FirstOrDefaultAsync(us => us.IdNhanVien == id);
             if (user is null || userPass is null) return ServiceResult<string>.Fail("Không tìm thấy tài khoản", 404);
             var NewReqCP = mapper.Map<ChangePassModel>(user);
             NewReqCP.PasswordHash = userPass.Password;
-            
+
             if (new PasswordHasher<ChangePassModel>().VerifyHashedPassword(NewReqCP, userPass.Password, Pass.OldPassword)
                 == PasswordVerificationResult.Failed)
             {
@@ -135,5 +136,29 @@ namespace QuanLyKhoApi.Services
                 return ServiceResult<string>.Fail($"Lỗi: {ex.Message}", 500);
             }
         }
+
+        public async Task<ServiceResult<HashSet<string>>> GetClaimUser(string id)
+        {
+            try
+            {
+                var claims = await db.TaiKhoan
+                    .Where(tk => tk.IdNhanVien.ToString() == id)
+                    .SelectMany(tk => tk.TaiKhoanRoles)
+                    .SelectMany(tkr => tkr.Role.RoleClaims)
+                    .Select(rc => rc.Claim.Quyen)
+                    .Distinct()
+                    .ToHashSetAsync();
+
+                if (claims == null || claims.Count == 0)
+                    return ServiceResult<HashSet<string>>.Fail("Người dùng không tồn tại hoặc không có quyền", 404);
+
+                return ServiceResult<HashSet<string>>.Ok(claims);
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult<HashSet<string>>.Fail($"Lỗi: {ex.Message}", 500);
+            }
+        }
+
     }
 }
