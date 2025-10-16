@@ -14,8 +14,11 @@ namespace QuanLyKhoApi.Helper
         public  async Task<bool> RoleHasClaimAsync(Guid IdNhanVien, string claimType)
         {
             return await context.TaiKhoanRoles
-         .Where(tr => tr.TaiKhoanId == IdNhanVien)
-         .AnyAsync(tr => tr.Role.Claims.Any(rc => rc.Quyen == claimType));
+            .Include(tr => tr.Role)
+            .ThenInclude(r => r.RoleClaims)
+            .Where(tr => tr.TaiKhoan.IdNhanVien == IdNhanVien)
+            .SelectMany(tr => tr.Role.RoleClaims)
+            .AnyAsync(rc => rc.Claim.Quyen == claimType);
         }
     }
 }

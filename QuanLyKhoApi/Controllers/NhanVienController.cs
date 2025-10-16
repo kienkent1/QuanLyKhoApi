@@ -1,10 +1,13 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuanLyKhoApi.Data;
 using QuanLyKhoApi.Dto;
+using QuanLyKhoApi.Helper;
 using QuanLyKhoApi.IServices;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace QuanLyKhoApi.Controllers
@@ -39,8 +42,9 @@ namespace QuanLyKhoApi.Controllers
                 vali.Message = "Vui lòng chọn đúng định dạng giới tính";
                 return vali;
             }
-            var isEmailExit = await db.NhanVien.AnyAsync(u => u.email ==  dto.email);
-            if (isEmailExit) {
+            var isEmailExit = await db.NhanVien.AnyAsync(u => u.email == dto.email);
+            if (isEmailExit)
+            {
                 vali.IsValid = false;
                 vali.Message = "Email đã tồn tại";
                 return vali;
@@ -68,7 +72,7 @@ namespace QuanLyKhoApi.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(500, ex.Message);
             }
         }
         [HttpPost("ThemNhanVien")]
@@ -82,43 +86,60 @@ namespace QuanLyKhoApi.Controllers
 
             try
             {
-                var NewNhanVien = await service.ThemNhanVienAsync(dto);
-                return Ok(NewNhanVien);
+                var result = await service.ThemNhanVienAsync(dto);
+                return StatusCode(result.StatusCode, new
+                {
+                    success = result.Success,
+                    message = result.Message,
+                    data = result.Data
+                });
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(500, ex.Message);
             }
         }
 
         [HttpPatch("UpdateNhanVien/{id}")]
-        public async Task<IActionResult> updateNhanVien([FromQuery] Guid id, [FromBody] NhanVienDto dto)
+        public async Task<IActionResult> updateNhanVien([FromQuery] Guid id, [FromForm] UpdateNhanVienDto dto)
         {
             try
             {
-                var updateNV = await service.UpdateNhanVienAsync(id, dto);
-                return Ok(updateNV);
+                var result = await service.UpdateNhanVienAsync(id, dto);
+                return MyStatusCodeBase.MyStatusCode(this, result);
             }
             catch (Exception e)
             {
-                return BadRequest(e.Message);
+                return StatusCode(500, e.Message);
             }
-
-
-
+        }
+        [HttpPatch("UpdateAvatar/{id}")]
+        public async Task<IActionResult> UpdateAvatarNV([FromRoute] string id, IFormFile file)
+        {
+            try
+            {
+                var result = await service.UpdateAvatarNV(id, file);
+                return MyStatusCodeBase.MyStatusCode(this, result);
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, e.Message);
+            }
         }
 
-        [HttpGet("ProfileUser/{id}")]
-        public async Task<IActionResult> ProfileUser([FromRoute] string id)
+        [Authorize]
+        [HttpGet("ProfileUser")]
+        public async Task<IActionResult> ProfileUser()
         {
+            var id = User.FindFirstValue(ClaimTypes.NameIdentifier).ToString();
             try
             {
-                var profile = await service.ProfileUser(id);
-                return Ok(profile);
+                var result = await service.ProfileUser(id);
+                return MyStatusCodeBase.MyStatusCode(this, result);
             }
             catch (Exception e)
             {
-                return BadRequest(e.Message);
+                return StatusCode(500, e.Message);
             }
         }
 
@@ -127,12 +148,33 @@ namespace QuanLyKhoApi.Controllers
         {
             try
             {
-                var changePass = await service.ChangePassword(Pass, id);
-                return Ok(changePass);
+                var result = await service.ChangePassword(Pass, id);
+                return StatusCode(result.StatusCode, new
+                {
+                    success = result.Success,
+                    message = result.Message,
+                    data = result.Data
+                });
             }
             catch (Exception e)
             {
-                return BadRequest(e.Message);
+                return StatusCode(500, e.Message);
+            }
+        }
+
+        [Authorize]
+        [HttpGet("GetClaimUser")]
+        public async Task<IActionResult> GetClaimUser()
+        {
+            var id = User.FindFirstValue(ClaimTypes.NameIdentifier).ToString();
+            try
+            {
+                var result = await service.GetClaimUser(id);
+                return MyStatusCodeBase.MyStatusCode(this, result);
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, e.Message);
             }
         }
     }

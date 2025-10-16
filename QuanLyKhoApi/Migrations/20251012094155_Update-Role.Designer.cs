@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using QuanLyKhoApi.Data;
@@ -11,9 +12,11 @@ using QuanLyKhoApi.Data;
 namespace QuanLyKhoApi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251012094155_Update-Role")]
+    partial class UpdateRole
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -143,18 +146,6 @@ namespace QuanLyKhoApi.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Claims");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Quyen = "User"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Quyen = "Admin"
-                        });
                 });
 
             modelBuilder.Entity("QuanLyKhoApi.Data.ComfirmAccount", b =>
@@ -445,6 +436,9 @@ namespace QuanLyKhoApi.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("text");
 
+                    b.Property<int?>("ClaimsId")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("Deleted")
                         .HasColumnType("boolean");
 
@@ -457,21 +451,9 @@ namespace QuanLyKhoApi.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Role");
+                    b.HasIndex("ClaimsId");
 
-                    b.HasData(
-                        new
-                        {
-                            Id = "user",
-                            Deleted = false,
-                            VaiTro = "User"
-                        },
-                        new
-                        {
-                            Id = "admin",
-                            Deleted = false,
-                            VaiTro = "Admin"
-                        });
+                    b.ToTable("Role");
                 });
 
             modelBuilder.Entity("QuanLyKhoApi.Data.RoleClaim", b =>
@@ -487,18 +469,6 @@ namespace QuanLyKhoApi.Migrations
                     b.HasIndex("ClaimId");
 
                     b.ToTable("RoleClaims");
-
-                    b.HasData(
-                        new
-                        {
-                            RoleId = "user",
-                            ClaimId = 1
-                        },
-                        new
-                        {
-                            RoleId = "admin",
-                            ClaimId = 2
-                        });
                 });
 
             modelBuilder.Entity("QuanLyKhoApi.Data.TaiKhoan", b =>
@@ -756,10 +726,17 @@ namespace QuanLyKhoApi.Migrations
                     b.Navigation("TrangThaiPhieu");
                 });
 
+            modelBuilder.Entity("QuanLyKhoApi.Data.Role", b =>
+                {
+                    b.HasOne("QuanLyKhoApi.Data.Claims", null)
+                        .WithMany("Roles")
+                        .HasForeignKey("ClaimsId");
+                });
+
             modelBuilder.Entity("QuanLyKhoApi.Data.RoleClaim", b =>
                 {
                     b.HasOne("QuanLyKhoApi.Data.Claims", "Claim")
-                        .WithMany("RoleClaims")
+                        .WithMany()
                         .HasForeignKey("ClaimId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -823,7 +800,7 @@ namespace QuanLyKhoApi.Migrations
 
             modelBuilder.Entity("QuanLyKhoApi.Data.Claims", b =>
                 {
-                    b.Navigation("RoleClaims");
+                    b.Navigation("Roles");
                 });
 
             modelBuilder.Entity("QuanLyKhoApi.Data.HangHoa", b =>

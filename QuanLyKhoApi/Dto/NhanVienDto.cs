@@ -30,7 +30,6 @@ namespace QuanLyKhoApi.Dto
         [Required(ErrorMessage = "Chức vụ là bắt buộc")]
         public string chucVu { get; set; }
 
-        public bool trangthai { get; set; } = true;
 
     }
 }

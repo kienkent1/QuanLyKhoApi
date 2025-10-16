@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using QuanLyKhoApi.Data;
 using QuanLyKhoApi.Dto.AuthenDto;
+using QuanLyKhoApi.Helper;
 using QuanLyKhoApi.IServices;
 
 namespace QuanLyKhoApi.Controllers
@@ -17,22 +18,10 @@ namespace QuanLyKhoApi.Controllers
         {
             try
             {
-                bool IsExitUser = await autsv.ExitsUser(req.IdNhanVien);
+               var result = await autsv.RegisterAsync(req);
 
-                if (IsExitUser == true)
-                {
-                    if (await autsv.ValidateAccount(req.IdNhanVien, req.TenDangNhap))
-                    {
+                return MyStatusCodeBase.MyStatusCode(this, result);
 
-
-                        var user = await autsv.RegisterAsync(req);
-                        if (user is null) return BadRequest("Tên đăng nhập đã tồn tại");
-
-                        return Ok(req.TenDangNhap);
-                    }
-                    else return BadRequest("Bạn chưa có thông tin trong hệ thống hoặc Tên đăng nhập bị trùng");
-                }
-                else return BadRequest("Bạn chưa có thông tin trong hệ thống");
             }
             catch (Exception ex)
             {
@@ -42,13 +31,13 @@ namespace QuanLyKhoApi.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult> Login([FromBody]LoginDto req)
+        public async Task<IActionResult> Login([FromBody]LoginDto req)
         {
             try
             {
-                var token = await autsv.LoginAsync(req);
-                if (token is null) return Unauthorized("Tên đăng nhập hoặc mật khẩu không đúng");
-                return Ok(token);
+                var result = await autsv.LoginAsync(req);
+                
+                return MyStatusCodeBase.MyStatusCode(this, result);
             }
             catch (Exception ex)
             {
@@ -61,8 +50,8 @@ namespace QuanLyKhoApi.Controllers
         public async Task<ActionResult<TokenResponseDto>> RefreshToken(RefreshTokenRequestDto tokenRequest)
         {
             var token = await autsv.RefreshTokenAsync(tokenRequest);
-            if (token is null || token.AccessToken is null || token.RefreshToken is null) return Unauthorized("Token không hợp lệ");
-            return Ok(token);
+            
+            return MyStatusCodeBase.MyStatusCode(this, token);
         }
 
         [HttpPost("google-Login")]
@@ -72,8 +61,8 @@ namespace QuanLyKhoApi.Controllers
             {
                 if (dto is null) return BadRequest("Không có id token được gửi");
                 var token = await autsv.GoogleLoginAsync(dto);
-                if (token is null) return BadRequest("Lỗi xác thực với id token");
-                return Ok(token);
+               
+                return MyStatusCodeBase.MyStatusCode(this, token);
             }
             catch (Exception ex)
             {
@@ -90,11 +79,9 @@ namespace QuanLyKhoApi.Controllers
         public async Task<IActionResult> GoogleRegister([FromBody] GoogleRegisterRequest req)
         {
             try
-            {
-                if (req.Dto is null || req.GG is null) return BadRequest("Vui lòng điền đầy đủ thông tin");
+            {     
                 var newAcc = await autsv.RegisterGoogle(req.GG, req.Dto);
-                if(newAcc is null) return BadRequest("lỗi: không thể tạo tài khoản");
-                return Ok(newAcc);
+                return MyStatusCodeBase.MyStatusCode(this, newAcc);
             }
             catch (Exception ex)
             {

@@ -17,7 +17,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
+});
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
@@ -25,7 +28,6 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddApplicationServices();
 
 builder.Services.Configure<GitHubOptions>(builder.Configuration.GetSection(GitHubOptions.GitHub));
-builder.Services.AddScoped<GitHubImageService>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(option =>
@@ -45,24 +47,24 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 
     })
-    .AddCookie()
-    .AddGoogle(option =>
-    {
-        var clientId = builder.Configuration["Authentication:Google:ClientId"];
-        if (clientId is null) throw new ArgumentNullException("ClientId is null");
-        var clientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
-        if (clientSecret is null) throw new ArgumentNullException("ClientSecret is null");
+    .AddCookie();
+    //.AddGoogle(option =>
+    //{
+    //    var clientId = builder.Configuration["Authentication:Google:ClientId"];
+    //    if (clientId is null) throw new ArgumentNullException("ClientId is null");
+    //    var clientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+    //    if (clientSecret is null) throw new ArgumentNullException("ClientSecret is null");
 
-        option.ClientId = clientId;
-        option.ClientSecret = clientSecret;
-        option.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-        option.Scope.Add("profile");
-        option.Scope.Add("email");
-        option.Scope.Add("openid");
+    //    option.ClientId = clientId;
+    //    option.ClientSecret = clientSecret;
+    //    option.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    //    option.Scope.Add("profile");
+    //    option.Scope.Add("email");
+    //    option.Scope.Add("openid");
 
-        option.ClaimActions.MapJsonKey("picture", "picture");
+    //    option.ClaimActions.MapJsonKey("picture", "picture");
 
-    });
+    //});
 var app = builder.Build();
 app.UseCors("CorPolicy");
 
