@@ -52,7 +52,7 @@ namespace QuanLyKhoApi.Controllers
             [FromQuery] int pageSize = 12)
         {
                 var nhanVien = await service.GetNhanVienAsync(query, page, pageSize);
-            return MyStatusCodeBase.MyStatusCode(this, nhanVien);
+                return MyStatusCodeBase.MyStatusCode(this, nhanVien);
 
         }
         [HttpPost("ThemNhanVien")]
@@ -63,48 +63,21 @@ namespace QuanLyKhoApi.Controllers
             {
                 return BadRequest(Validate.Message);
             }
-
-            try
-            {
                 var result = await service.ThemNhanVienAsync(dto);
-                return StatusCode(result.StatusCode, new
-                {
-                    success = result.Success,
-                    message = result.Message,
-                    data = result.Data
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
         [HttpPatch("UpdateNhanVien/{id}")]
         public async Task<IActionResult> updateNhanVien([FromQuery] Guid id, [FromForm] UpdateNhanVienDto dto)
         {
-            try
-            {
                 var result = await service.UpdateNhanVienAsync(id, dto);
                 return MyStatusCodeBase.MyStatusCode(this, result);
-            }
-            catch (Exception e)
-            {
-                return StatusCode(500, e.Message);
-            }
         }
         [HttpPatch("UpdateAvatar/{id}")]
         public async Task<IActionResult> UpdateAvatarNV([FromRoute] string id, IFormFile file)
         {
-            try
-            {
                 var result = await service.UpdateAvatarNV(id, file);
                 return MyStatusCodeBase.MyStatusCode(this, result);
-            }
-            catch (Exception e)
-            {
-                return StatusCode(500, e.Message);
-            }
         }
 
         [Authorize]
@@ -112,34 +85,15 @@ namespace QuanLyKhoApi.Controllers
         public async Task<IActionResult> ProfileUser()
         {
             var id = User.FindFirstValue(ClaimTypes.NameIdentifier).ToString();
-            try
-            {
-                var result = await service.ProfileUser(id);
-                return MyStatusCodeBase.MyStatusCode(this, result);
-            }
-            catch (Exception e)
-            {
-                return StatusCode(500, e.Message);
-            }
+            var result = await service.ProfileUser(id);
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
         [HttpPost("ChangePassword/{id}")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePassworDto Pass, [FromRoute] Guid id)
         {
-            try
-            {
                 var result = await service.ChangePassword(Pass, id);
-                return StatusCode(result.StatusCode, new
-                {
-                    success = result.Success,
-                    message = result.Message,
-                    data = result.Data
-                });
-            }
-            catch (Exception e)
-            {
-                return StatusCode(500, e.Message);
-            }
+                return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
         [Authorize]
@@ -147,15 +101,8 @@ namespace QuanLyKhoApi.Controllers
         public async Task<IActionResult> GetClaimUser()
         {
             var id = User.FindFirstValue(ClaimTypes.NameIdentifier).ToString();
-            try
-            {
-                var result = await service.GetClaimUser(id);
-                return MyStatusCodeBase.MyStatusCode(this, result);
-            }
-            catch (Exception e)
-            {
-                return StatusCode(500, e.Message);
-            }
+            var result = await service.GetClaimUser(id);
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
     }
 }
