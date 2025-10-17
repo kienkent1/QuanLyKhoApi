@@ -3,18 +3,27 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Npgsql;
 using QuanLyKhoApi.Data;
+using QuanLyKhoApi.Helper;
 using QuanLyKhoApi.Services;
 using Scalar.AspNetCore;
 using System.Text;
-using QuanLyKhoApi.Helper;
 using static QuanLyKhoApi.Helper.GitHubImageService;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+var dataSourceBuilder = new NpgsqlDataSourceBuilder(
+    builder.Configuration.GetConnectionString("DefaultConnection")
+);
+
+dataSourceBuilder.EnableDynamicJson();
+
+var dataSource = dataSourceBuilder.Build();
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(dataSource));
 
 
 builder.Services.AddControllers().AddJsonOptions(options =>
