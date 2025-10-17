@@ -59,7 +59,7 @@ namespace QuanLyKhoApi.Controllers
         public async Task<IActionResult> ThemNhanVien([FromBody] NhanVienDto dto)
         {
             ValidateNhanVienDto Validate = await ValitdateNhanVien(dto);
-            if (Validate.IsValid)
+            if (Validate.IsValid == false)
             {
                 return BadRequest(Validate.Message);
             }
