@@ -36,12 +36,6 @@ namespace QuanLyKhoApi.Controllers
                 vali.Message = "Bạn Không đủ tuổi";
                 return vali;
             }
-            if (dto.gioiTinh != "Nam" || dto.gioiTinh != "Nữ")
-            {
-                vali.IsValid = false;
-                vali.Message = "Vui lòng chọn đúng định dạng giới tính";
-                return vali;
-            }
             var isEmailExit = await db.NhanVien.AnyAsync(u => u.email == dto.email);
             if (isEmailExit)
             {
@@ -52,28 +46,14 @@ namespace QuanLyKhoApi.Controllers
             return vali;
         }
         [HttpGet]
-        public async Task<ActionResult<List<NhanVien>>> GetNhanVien(string? query, int page = 1, int pageSize = 12)
+        public async Task<ActionResult<List<NhanVien>>> GetNhanVien(
+            [FromQuery]string? query,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 12)
         {
-            try
-            {
-                var nhanVien = await service.GetNhanVienAsync();
+                var nhanVien = await service.GetNhanVienAsync(query, page, pageSize);
+            return MyStatusCodeBase.MyStatusCode(this, nhanVien);
 
-
-                if (query is not null)
-                {
-                    nhanVien = nhanVien.Where(nv => nv.TenNhanVien.Contains(query) ||
-                    nv.IdNhanVien.ToString().Contains(query) ||
-                    nv.diaChi.Contains(query) ||
-                    nv.email.Contains(query));
-                }
-                var result = await Helper.Pagination<NhanVien>.PaginationAsync(nhanVien, page, pageSize);
-                int tongNV = result.Count;
-                return Ok(new { result, tongNV });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
         }
         [HttpPost("ThemNhanVien")]
         public async Task<IActionResult> ThemNhanVien([FromBody] NhanVienDto dto)

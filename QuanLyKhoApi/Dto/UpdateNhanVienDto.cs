@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using static QuanLyKhoApi.Helper.BaseEnum;
 
 namespace QuanLyKhoApi.Dto
 {
@@ -23,7 +24,7 @@ namespace QuanLyKhoApi.Dto
         public DateTime? ngaySinh { get; set; }
 
         public IFormFile? avatar { get; set; }
-        public string? gioiTinh { get; set; }
+        public GIOITINH gioiTinh { get; set; }
 
         public string? chucVu { get; set; }
 
