@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
+
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 
 namespace QuanLyKhoApi.Migrations
 {
@@ -49,7 +52,7 @@ namespace QuanLyKhoApi.Migrations
                     MaNCC = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     TenNCC = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    DiaChi = table.Column<string>(type: "text", nullable: true),
+                    DiaChi = table.Column<Dictionary<string, object>>(type: "jsonb", nullable: true, defaultValueSql: "'{}'::jsonb"),
                     DienThoai = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: false),
                     Email = table.Column<string>(type: "text", nullable: true),
                     HinhAnh = table.Column<string>(type: "text", nullable: true),
@@ -70,7 +73,7 @@ namespace QuanLyKhoApi.Migrations
                     TenNhanVien = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     email = table.Column<string>(type: "text", nullable: false),
                     sdt = table.Column<string>(type: "character varying(15)", maxLength: 15, nullable: false),
-                    diaChi = table.Column<string>(type: "text", nullable: true),
+                    diaChi = table.Column<Dictionary<string, object>>(type: "jsonb", nullable: true, defaultValueSql: "'{}'::jsonb"),
                     ngaySinh = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     gioiTinh = table.Column<string>(type: "text", nullable: false),
                     chucVu = table.Column<string>(type: "text", nullable: false),
@@ -96,6 +99,25 @@ namespace QuanLyKhoApi.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Role", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ThongKe",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Year = table.Column<int>(type: "integer", nullable: false),
+                    Month = table.Column<int>(type: "integer", nullable: false),
+                    SoPhieuluongNhap = table.Column<int>(type: "integer", nullable: false),
+                    SoPhieuluongXuat = table.Column<int>(type: "integer", nullable: false),
+                    TongGiaNhap = table.Column<decimal>(type: "numeric", nullable: false),
+                    TongGiaXuat = table.Column<decimal>(type: "numeric", nullable: false),
+                    UpdateAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ThongKe", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -165,30 +187,6 @@ namespace QuanLyKhoApi.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ClaimsRole",
-                columns: table => new
-                {
-                    ClaimsId = table.Column<int>(type: "integer", nullable: false),
-                    RolesId = table.Column<string>(type: "text", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ClaimsRole", x => new { x.ClaimsId, x.RolesId });
-                    table.ForeignKey(
-                        name: "FK_ClaimsRole_Claims_ClaimsId",
-                        column: x => x.ClaimsId,
-                        principalTable: "Claims",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ClaimsRole_Role_RolesId",
-                        column: x => x.RolesId,
-                        principalTable: "Role",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "RoleClaims",
                 columns: table => new
                 {
@@ -249,6 +247,7 @@ namespace QuanLyKhoApi.Migrations
                     NgayNhap = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     MaNV = table.Column<Guid>(type: "uuid", nullable: false),
                     MaNCC = table.Column<string>(type: "text", nullable: false),
+                    GiaNhap = table.Column<decimal>(type: "numeric", nullable: true),
                     MaHH = table.Column<Guid>(type: "uuid", nullable: false),
                     MaTrangThai = table.Column<int>(type: "integer", nullable: false),
                     GhiChu = table.Column<string>(type: "text", nullable: true)
@@ -286,6 +285,7 @@ namespace QuanLyKhoApi.Migrations
                     MaNV = table.Column<Guid>(type: "uuid", nullable: false),
                     MaTrangThai = table.Column<int>(type: "integer", nullable: false),
                     GhiChu = table.Column<string>(type: "text", nullable: true),
+                    GiaXuat = table.Column<decimal>(type: "numeric", nullable: true),
                     MaHH = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
@@ -380,6 +380,7 @@ namespace QuanLyKhoApi.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     CauHinhId = table.Column<Guid>(type: "uuid", nullable: false),
                     Url = table.Column<string>(type: "text", nullable: false),
+                    Stt = table.Column<int>(type: "integer", nullable: true),
                     CreateAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
@@ -447,6 +448,33 @@ namespace QuanLyKhoApi.Migrations
                         principalColumn: "MaPhieuXuat");
                 });
 
+            migrationBuilder.InsertData(
+                table: "Claims",
+                columns: new[] { "Id", "Quyen" },
+                values: new object[,]
+                {
+                    { 1, "User" },
+                    { 2, "Admin" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Role",
+                columns: new[] { "Id", "Deleted", "DeletedAt", "VaiTro" },
+                values: new object[,]
+                {
+                    { "admin", false, null, "Admin" },
+                    { "user", false, null, "User" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "RoleClaims",
+                columns: new[] { "ClaimId", "RoleId" },
+                values: new object[,]
+                {
+                    { 2, "admin" },
+                    { 1, "user" }
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_CauHinh_MaHH",
                 table: "CauHinh",
@@ -471,11 +499,6 @@ namespace QuanLyKhoApi.Migrations
                 name: "IX_ChiTietXuat_PhieuXuatMaPhieuXuat",
                 table: "ChiTietXuat",
                 column: "PhieuXuatMaPhieuXuat");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ClaimsRole_RolesId",
-                table: "ClaimsRole",
-                column: "RolesId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_HangHoa_IdLoai",
@@ -548,9 +571,6 @@ namespace QuanLyKhoApi.Migrations
                 name: "ChiTietXuat");
 
             migrationBuilder.DropTable(
-                name: "ClaimsRole");
-
-            migrationBuilder.DropTable(
                 name: "ComfirmAccounts");
 
             migrationBuilder.DropTable(
@@ -564,6 +584,9 @@ namespace QuanLyKhoApi.Migrations
 
             migrationBuilder.DropTable(
                 name: "TaiKhoanToken");
+
+            migrationBuilder.DropTable(
+                name: "ThongKe");
 
             migrationBuilder.DropTable(
                 name: "PhieuNhap");

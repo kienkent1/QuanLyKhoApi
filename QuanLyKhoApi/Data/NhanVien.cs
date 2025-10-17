@@ -12,7 +12,7 @@ namespace QuanLyKhoApi.Data
         public string email { get; set; }
         [Required, MaxLength(15)]
         public string sdt { get; set; }
-        public string? diaChi { get; set; }
+        public Dictionary<string, object>? diaChi { get; set; }
         public DateTime ngaySinh { get; set; }
         [Required]
         public string gioiTinh { get; set; }
