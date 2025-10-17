@@ -7,6 +7,7 @@ using QuanLyKhoApi.Data;
 using QuanLyKhoApi.Dto;
 using QuanLyKhoApi.Helper;
 using QuanLyKhoApi.IServices;
+using System.Linq;
 
 namespace QuanLyKhoApi.Services
 {
@@ -21,9 +22,9 @@ namespace QuanLyKhoApi.Services
                 var nhanVien = db.NhanVien.AsQueryable();
                 if (query is not null)
                 {
-                    nhanVien = nhanVien.Where(nv => nv.TenNhanVien.Contains(query) ||
+                    nhanVien = nhanVien.Where(nv => 
+                    nv.TenNhanVien.Contains(query) ||
                     nv.IdNhanVien.ToString().Contains(query) ||
-                    nv.diaChi.Contains(query) ||
                     nv.email.Contains(query));
                 }
                 var result = await Helper.Pagination<NhanVien>.PaginationAsync(nhanVien, page, pageSize);
@@ -104,7 +105,7 @@ namespace QuanLyKhoApi.Services
             if (!string.IsNullOrEmpty(dto.sdt))
                 nv.sdt = dto.sdt;
 
-            if (!string.IsNullOrEmpty(dto.diaChi))
+            if (dto.diaChi is not null)
                 nv.diaChi = dto.diaChi;
 
             if (dto.ngaySinh != default)

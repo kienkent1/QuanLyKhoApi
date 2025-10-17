@@ -34,6 +34,14 @@ namespace QuanLyKhoApi.Data
                 .HasKey(rc => new { rc.RoleId, rc.ClaimId });
             modelBuilder.Entity<TaiKhoanRole>()
                 .HasKey(tr => new { tr.TaiKhoanId, tr.RoleId });
+            modelBuilder.Entity<NhanVien>()
+                .Property(nv => nv.diaChi)             
+                .HasColumnType("jsonb")
+                .HasDefaultValueSql("'{}'::jsonb");
+            modelBuilder.Entity<NhaCungCap>()
+                .Property(ncc => ncc.DiaChi)
+                .HasColumnType("jsonb")
+                .HasDefaultValueSql("'{}'::jsonb");
 
             //seeds data
             modelBuilder.Entity<Role>().HasData(
@@ -49,6 +57,7 @@ namespace QuanLyKhoApi.Data
                 new RoleClaim { RoleId = "user", ClaimId = 1 },
                 new RoleClaim { RoleId = "admin", ClaimId = 2 }
                 );
+            
         }
     }
 }

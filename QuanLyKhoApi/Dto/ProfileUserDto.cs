@@ -19,7 +19,7 @@ namespace QuanLyKhoApi.Dto
         [RegularExpression(@"^\d{9,13}$", ErrorMessage = "Số điện thoại phải có từ 9 đến 13 chữ số")]
         public string sdt { get; set; }
 
-        public string? diaChi { get; set; }
+        public Dictionary<string, object>? diaChi { get; set; }
 
         public string? UrlHinh { get; set; }
 
