@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using static QuanLyKhoApi.Helper.BaseEnum;
 
 namespace QuanLyKhoApi.Dto
 {
@@ -26,7 +27,7 @@ namespace QuanLyKhoApi.Dto
         public DateTime ngaySinh { get; set; }
 
         [Required(ErrorMessage = "Giới tính là bắt buộc")]
-        public string gioiTinh { get; set; }
+        public GIOITINH gioiTinh { get; set; }
 
         public DateTime? UpdateAt { get; set; }
     }

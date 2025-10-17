@@ -5,8 +5,8 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using QuanLyKhoApi.Data;
 using QuanLyKhoApi.Dto;
-using QuanLyKhoApi.IServices;
 using QuanLyKhoApi.Helper;
+using QuanLyKhoApi.IServices;
 
 namespace QuanLyKhoApi.Services
 {
@@ -14,10 +14,33 @@ namespace QuanLyKhoApi.Services
     {
 
 
-        public async Task<IQueryable<NhanVien>> GetNhanVienAsync()
+        public async Task<ServiceResult<PaginatedResult<List<NhanVien>>>> GetNhanVienAsync(string? query, int page, int pageSize )
         {
-            var nhanVien = db.NhanVien.AsQueryable();
-            return nhanVien;
+            try
+            {
+                var nhanVien = db.NhanVien.AsQueryable();
+                if (query is not null)
+                {
+                    nhanVien = nhanVien.Where(nv => nv.TenNhanVien.Contains(query) ||
+                    nv.IdNhanVien.ToString().Contains(query) ||
+                    nv.diaChi.Contains(query) ||
+                    nv.email.Contains(query));
+                }
+                var result = await Helper.Pagination<NhanVien>.PaginationAsync(nhanVien, page, pageSize);
+                int tongNV =await nhanVien.CountAsync();
+                return ServiceResult<PaginatedResult<List<NhanVien>>>.Ok(new PaginatedResult<List<NhanVien>>
+                {
+                    CurrentPage = page,
+                    PageSize = pageSize,
+                    TotalItems = tongNV,
+                    TotalPages = (int)Math.Ceiling((double)tongNV / pageSize),
+                    Data = result
+                });
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult<PaginatedResult<List<NhanVien>>>.Fail($"Lỗi: {ex.Message}", 500);
+            }
         }
 
         public async Task<ServiceResult<ProfileUserDto>> ProfileUser(string id)
@@ -35,7 +58,7 @@ namespace QuanLyKhoApi.Services
                 diaChi = profile.diaChi,
                 UrlHinh = profile.UrlHinh,
                 ngaySinh = profile.ngaySinh,
-                gioiTinh = profile.gioiTinh,
+                gioiTinh = Enum.TryParse<BaseEnum.GIOITINH>(profile.gioiTinh, out var parsedGioiTinh) ? parsedGioiTinh : BaseEnum.GIOITINH.Nam,
                 UpdateAt = profile.UpdateAt
             };
             return ServiceResult<ProfileUserDto>.Ok(result);
@@ -86,9 +109,6 @@ namespace QuanLyKhoApi.Services
 
             if (dto.ngaySinh != default)
                 nv.ngaySinh = DateTime.SpecifyKind((DateTime)dto.ngaySinh, DateTimeKind.Utc);
-
-            if (!string.IsNullOrEmpty(dto.gioiTinh))
-                nv.gioiTinh = dto.gioiTinh;
 
             if (!string.IsNullOrEmpty(dto.chucVu))
                 nv.chucVu = dto.chucVu;
