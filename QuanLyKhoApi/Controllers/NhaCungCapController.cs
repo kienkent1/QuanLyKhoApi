@@ -7,41 +7,48 @@ namespace QuanLyKhoApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class NhaCungCapController(INhaCungCapService nhaCungCapService) : ControllerBase
+    public class NhaCungCapController : ControllerBase
     {
-        [HttpPost("create")]
-        public async Task<IActionResult> CreateNhaCungCap([FromBody] NhaCungCapDto dto)
+        private readonly INhaCungCapService nhaCungCapService;
+
+        public NhaCungCapController(INhaCungCapService nhaCungCapService)
         {
-                var result = await nhaCungCapService.CreateNhaCungCapAsync(dto);
-                return MyStatusCodeBase.MyStatusCode(this, result);
+            this.nhaCungCapService = nhaCungCapService;
         }
 
-        [HttpGet("get-all")]
-        public async Task<IActionResult> GetAllNhaCungCap()
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
         {
-                var result = await nhaCungCapService.GetAllNhaCungCapAsync();
-                return MyStatusCodeBase.MyStatusCode(this, result);
+            var result = await nhaCungCapService.GetAllNhaCungCapAsync();
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
-        [HttpGet("get-by-id/{id}")]
-        public async Task<IActionResult> GetNhaCungCapById(int id)
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
         {
-                var result = await nhaCungCapService.GetNhaCungCapByIdAsync(id);
-                return MyStatusCodeBase.MyStatusCode(this, result);
+            var result = await nhaCungCapService.GetNhaCungCapByIdAsync(id);
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
-        [HttpPut("update/{id}")]
-        public async Task<IActionResult> UpdateNhaCungCap(int id, [FromBody] NhaCungCapDto dto)
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] NhaCungCapDto dto)
         {
-                var result = await nhaCungCapService.UpdateNhaCungCapAsync(id, dto);
-                return MyStatusCodeBase.MyStatusCode(this, result);
+            var result = await nhaCungCapService.CreateNhaCungCapAsync(dto);
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
-        [HttpDelete("delete/{id}")]
-        public async Task<IActionResult> DeleteNhaCungCap(int id)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] NhaCungCapDto dto)
         {
-                var result = await nhaCungCapService.DeleteNhaCungCapAsync(id);
-                 return MyStatusCodeBase.MyStatusCode(this, result);
+            var result = await nhaCungCapService.UpdateNhaCungCapAsync(id, dto);
+            return MyStatusCodeBase.MyStatusCode(this, result);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var result = await nhaCungCapService.DeleteNhaCungCapAsync(id);
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
     }
 }

@@ -9,16 +9,11 @@ namespace QuanLyKhoApi.Profiles
         public HangHoaProfile()
         {
             CreateMap<HangHoaDto, HangHoa>()
-                .ForMember(dest => dest.MaHH, opt => opt.Ignore())
                 .ForMember(dest => dest.Deleted, opt => opt.MapFrom(src => false))
                 .ForMember(dest => dest.DeletedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.CauHinhs, opt => opt.Ignore())
                 .ForMember(dest => dest.loai, opt => opt.Ignore())
                 .ForMember(dest => dest.NhaCungCap, opt => opt.Ignore());
-
-            CreateMap<HangHoa, HangHoaDto>()
-                .ForMember(dest => dest.Loai, opt => opt.MapFrom(src => src.loai))
-                .ForMember(dest => dest.CauHinhs, opt => opt.MapFrom(src => src.CauHinhs));
             CreateMap<CauHinhDto, CauHinh>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.Deleted, opt => opt.MapFrom(src => false))
@@ -26,7 +21,6 @@ namespace QuanLyKhoApi.Profiles
                 .ForMember(dest => dest.SoLuongHidden, opt => opt.MapFrom(src => src.SoLuongHidden ?? 0))
                 .ForMember(dest => dest.HangHoa, opt => opt.Ignore())
                 .ForMember(dest => dest.HinhAnhs, opt => opt.Ignore());
-
             CreateMap<CauHinh, CauHinhDto>();
             CreateMap<Loai, LoaiDto>();
             CreateMap<LoaiDto, Loai>()
