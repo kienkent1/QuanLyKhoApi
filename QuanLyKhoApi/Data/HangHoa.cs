@@ -7,7 +7,7 @@ namespace QuanLyKhoApi.Data
     public class HangHoa
     {
         [Key]
-        public Guid MaHH { get; set; } = Guid.NewGuid();
+        public Guid MaHH { get; set; }
 
         [Required, MaxLength(200)]
         public string Model { get; set; }

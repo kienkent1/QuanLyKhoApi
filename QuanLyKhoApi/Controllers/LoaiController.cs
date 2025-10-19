@@ -7,43 +7,48 @@ namespace QuanLyKhoApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class LoaiController(ILoaiService service) : ControllerBase
+    public class LoaiController : ControllerBase
     {
-        [HttpPost("create")]
-        public async Task<IActionResult> CreateLoai([FromBody] LoaiDto dto)
-        {
+        private readonly ILoaiService service;
 
-                var result = await service.ThemLoaiAsync(dto);
-                return MyStatusCodeBase.MyStatusCode(this, result);
+        public LoaiController(ILoaiService service)
+        {
+            this.service = service;
         }
 
-        [HttpPut("update/{id}")]
-        public async Task<IActionResult> UpdateLoai(int id, [FromBody] LoaiDto dto)
+        [HttpGet]
+        public async Task<IActionResult> GetAll([FromQuery] string? query)
         {
-
-                var result = await service.SuaLoai(id, dto);
-                return MyStatusCodeBase.MyStatusCode(this, result);
+            var result = await service.GetLoai(query);
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
-        [HttpGet("get-all")]
-        public async Task<IActionResult> GetAllLoai([FromQuery] string? query)
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
         {
-                var result = await service.GetLoai(query);
-                return MyStatusCodeBase.MyStatusCode(this, result);
+            var result = await service.GetLoaiById(id);
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
-        [HttpGet("get-by-id/{id}")]
-        public async Task<IActionResult> GetLoaiById(int id)
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] LoaiDto dto)
         {
-                var result = await service.GetLoaiById(id);
-                return MyStatusCodeBase.MyStatusCode(this, result);
+            var result = await service.ThemLoaiAsync(dto);
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
-        [HttpDelete("delete/{id}")]
-        public async Task<IActionResult> DeleteLoai(int id)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] LoaiDto dto)
         {
-                var result = await service.XoaLoaiTamAsync(id);
-                return MyStatusCodeBase.MyStatusCode(this, result);
+            var result = await service.SuaLoai(id, dto);
+            return MyStatusCodeBase.MyStatusCode(this, result);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var result = await service.XoaLoaiTamAsync(id);
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
     }
 }

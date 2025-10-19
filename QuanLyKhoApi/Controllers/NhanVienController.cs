@@ -16,11 +16,23 @@ namespace QuanLyKhoApi.Controllers
     [ApiController]
     public class NhanVienController(INhanVienService service, AppDbContext db, AuthorizationService authorization) : ControllerBase
     {
+        private readonly INhanVienService service;
+        private readonly AppDbContext db;
+        private readonly AuthorizationService authorization;
+
+        public NhanVienController(INhanVienService service, AppDbContext db, AuthorizationService authorization)
+        {
+            this.service = service;
+            this.db = db;
+            this.authorization = authorization;
+        }
+
         private class ValidateNhanVienDto
         {
             public bool IsValid { get; set; } = true;
             public string Message { get; set; }
         }
+
         private async Task<ValidateNhanVienDto> ValitdateNhanVien(NhanVienDto dto)
         {
             var vali = new ValidateNhanVienDto();
@@ -56,6 +68,11 @@ namespace QuanLyKhoApi.Controllers
                 var nhanVien = await service.GetNhanVienAsync(query, page, pageSize, sort);
                 return MyStatusCodeBase.MyStatusCode(this, nhanVien);
 
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(Guid id)
+        {
+            var result = await service.GetNhanVienByIdAsync(id);
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
         [Authorize]
         [HttpPost("ThemNhanVien")]
@@ -72,7 +89,7 @@ namespace QuanLyKhoApi.Controllers
             {
                 return BadRequest(Validate.Message);
             }
-                var result = await service.ThemNhanVienAsync(dto);
+            var result = await service.ThemNhanVienAsync(dto);
             return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
@@ -80,18 +97,19 @@ namespace QuanLyKhoApi.Controllers
         [HttpPatch("UpdateNhanVien/{id}")]
         public async Task<IActionResult> updateNhanVien([FromQuery] Guid id, [FromForm] UpdateNhanVienDto dto)
         {
-                var result = await service.UpdateNhanVienAsync(id, dto);
-                return MyStatusCodeBase.MyStatusCode(this, result);
+            var result = await service.UpdateNhanVienAsync(id, dto);
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
-        [HttpPatch("UpdateAvatar/{id}")]
-        public async Task<IActionResult> UpdateAvatarNV([FromRoute] string id, IFormFile file)
+
+        [HttpPatch("{id}/avatar")]
+        public async Task<IActionResult> UpdateAvatar(Guid id, IFormFile file)
         {
-                var result = await service.UpdateAvatarNV(id, file);
-                return MyStatusCodeBase.MyStatusCode(this, result);
+            var result = await service.UpdateAvatarNV(id.ToString(), file);
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
         [Authorize]
-        [HttpGet("ProfileUser")]
+        [HttpGet("me")]
         public async Task<IActionResult> ProfileUser()
         {
             var id = User.FindFirstValue(ClaimTypes.NameIdentifier).ToString();
@@ -99,19 +117,26 @@ namespace QuanLyKhoApi.Controllers
             return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
-        [HttpPost("ChangePassword/{id}")]
+        [HttpPost("{id}/password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePassworDto Pass, [FromRoute] Guid id)
         {
-                var result = await service.ChangePassword(Pass, id);
-                return MyStatusCodeBase.MyStatusCode(this, result);
+            var result = await service.ChangePassword(Pass, id);
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
         [Authorize]
-        [HttpGet("GetClaimUser")]
+        [HttpGet("permissions")]
         public async Task<IActionResult> GetClaimUser()
         {
             var id = User.FindFirstValue(ClaimTypes.NameIdentifier).ToString();
             var result = await service.GetClaimUser(id);
+            return MyStatusCodeBase.MyStatusCode(this, result);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            var result = await service.DeleteNhanVienAsync(id);
             return MyStatusCodeBase.MyStatusCode(this, result);
         }
     }
