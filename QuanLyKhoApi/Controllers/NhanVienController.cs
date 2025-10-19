@@ -53,7 +53,7 @@ namespace QuanLyKhoApi.Controllers
             [FromQuery] int pageSize = 12,
             [FromQuery] SortOBJ? sort = null)
         {
-                var nhanVien = await service.GetNhanVienAsync(query, page, pageSize);
+                var nhanVien = await service.GetNhanVienAsync(query, page, pageSize, sort);
                 return MyStatusCodeBase.MyStatusCode(this, nhanVien);
 
         }
