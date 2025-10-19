@@ -53,8 +53,8 @@ namespace QuanLyKhoApi.Controllers
             [FromQuery] int pageSize = 12,
             [FromQuery] SortOBJ? sort = null)
         {
-                var nhanVien = await service.GetNhanVienAsync(query, page, pageSize);
-                return MyStatusCodeBase.MyStatusCode(this, nhanVien);
+            var nhanVien = await service.GetNhanVienAsync(query, page, pageSize, sort);
+            return MyStatusCodeBase.MyStatusCode(this, nhanVien);
 
         }
         [Authorize]
@@ -72,7 +72,7 @@ namespace QuanLyKhoApi.Controllers
             {
                 return BadRequest(Validate.Message);
             }
-                var result = await service.ThemNhanVienAsync(dto);
+            var result = await service.ThemNhanVienAsync(dto);
             return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
@@ -80,14 +80,14 @@ namespace QuanLyKhoApi.Controllers
         [HttpPatch("UpdateNhanVien/{id}")]
         public async Task<IActionResult> updateNhanVien([FromQuery] Guid id, [FromForm] UpdateNhanVienDto dto)
         {
-                var result = await service.UpdateNhanVienAsync(id, dto);
-                return MyStatusCodeBase.MyStatusCode(this, result);
+            var result = await service.UpdateNhanVienAsync(id, dto);
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
         [HttpPatch("UpdateAvatar/{id}")]
         public async Task<IActionResult> UpdateAvatarNV([FromRoute] string id, IFormFile file)
         {
-                var result = await service.UpdateAvatarNV(id, file);
-                return MyStatusCodeBase.MyStatusCode(this, result);
+            var result = await service.UpdateAvatarNV(id, file);
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
         [Authorize]
@@ -102,8 +102,8 @@ namespace QuanLyKhoApi.Controllers
         [HttpPost("ChangePassword/{id}")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePassworDto Pass, [FromRoute] Guid id)
         {
-                var result = await service.ChangePassword(Pass, id);
-                return MyStatusCodeBase.MyStatusCode(this, result);
+            var result = await service.ChangePassword(Pass, id);
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
         [Authorize]
