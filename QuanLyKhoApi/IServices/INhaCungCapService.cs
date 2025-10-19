@@ -1,14 +1,15 @@
 ﻿using QuanLyKhoApi.Data;
 using QuanLyKhoApi.Dto;
+using QuanLyKhoApi.Helper;
 
 namespace QuanLyKhoApi.IServices
 {
     public interface INhaCungCapService
     {
-        Task<NhaCungCap?> CreateNhaCungCapAsync(NhaCungCapDto dto);
-        Task<IEnumerable<NhaCungCap>> GetAllNhaCungCapAsync();
-        Task<NhaCungCap?> GetNhaCungCapByIdAsync(int id);
-        Task<bool> UpdateNhaCungCapAsync(int id, NhaCungCapDto dto);
-        Task<bool> DeleteNhaCungCapAsync(int id);
+        Task<ServiceResult<NhaCungCap?>> CreateNhaCungCapAsync(NhaCungCapDto dto);
+        Task<ServiceResult<List<NhaCungCap>>> GetAllNhaCungCapAsync();
+        Task<ServiceResult<NhaCungCap?>> GetNhaCungCapByIdAsync(int id);
+        Task<ServiceResult<bool>> UpdateNhaCungCapAsync(int id, NhaCungCapDto dto);
+        Task<ServiceResult<bool>> DeleteNhaCungCapAsync(int id);
     }
 }
