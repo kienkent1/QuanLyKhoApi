@@ -15,6 +15,8 @@ namespace QuanLyKhoApi.Services
             services.AddScoped<GitHubImageService>();
             services.AddScoped<Ironbarcode>();
             services.AddScoped<IThongKeServices, ThongKeService>();
+            services.AddScoped<AuthorizationService>();
+            services.AddScoped<IRoleService, RoleService>();
             return services;
         }
     }

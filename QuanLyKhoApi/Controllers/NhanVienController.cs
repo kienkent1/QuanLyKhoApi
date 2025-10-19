@@ -14,7 +14,7 @@ namespace QuanLyKhoApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class NhanVienController(INhanVienService service, AppDbContext db) : ControllerBase
+    public class NhanVienController(INhanVienService service, AppDbContext db, AuthorizationService authorization) : ControllerBase
     {
         private class ValidateNhanVienDto
         {
@@ -45,19 +45,34 @@ namespace QuanLyKhoApi.Controllers
             }
             return vali;
         }
+        [Authorize]
         [HttpGet]
         public async Task<ActionResult<List<NhanVien>>> GetNhanVien(
-            [FromQuery]string? query,
+            [FromQuery] string? query = null,
             [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 12)
+            [FromQuery] int pageSize = 12,
+            [FromQuery] SortOBJ? sort = null)
         {
-                var nhanVien = await service.GetNhanVienAsync(query, page, pageSize);
+            var idUser = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isHasClaim = await authorization.RoleHasClaimAsync(idUser, "XemNhanVien");
+            if (isHasClaim.Success == false)
+            {
+                return MyStatusCodeBase.MyStatusCode(this, isHasClaim);
+            }
+            var nhanVien = await service.GetNhanVienAsync(query, page, pageSize, sort);
             return MyStatusCodeBase.MyStatusCode(this, nhanVien);
 
         }
+        [Authorize]
         [HttpPost("ThemNhanVien")]
         public async Task<IActionResult> ThemNhanVien([FromBody] NhanVienDto dto)
         {
+            var iduser = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isHasClaim = await authorization.RoleHasClaimAsync(iduser, "ThemNhanVien");
+            if (isHasClaim.Success == false)
+            {
+                return MyStatusCodeBase.MyStatusCode(this, isHasClaim);
+            }
             ValidateNhanVienDto Validate = await ValitdateNhanVien(dto);
             if (Validate.IsValid == false)
             {
@@ -80,9 +95,12 @@ namespace QuanLyKhoApi.Controllers
             }
         }
 
+        [Authorize]
         [HttpPatch("UpdateNhanVien/{id}")]
         public async Task<IActionResult> updateNhanVien([FromQuery] Guid id, [FromForm] UpdateNhanVienDto dto)
         {
+            var iduser = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isHasClaim = await authorization.RoleHasClaimAsync(iduser, "SuaNhanVien");
             try
             {
                 var result = await service.UpdateNhanVienAsync(id, dto);

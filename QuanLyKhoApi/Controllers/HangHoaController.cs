@@ -47,7 +47,7 @@ namespace QuanLyKhoApi.Controllers
             }
         }
 
-        [HttpGet("get-all")]
+        [HttpGet("/")]
         public async Task<IActionResult> GetAllHangHoa()
         {
             try
@@ -61,7 +61,7 @@ namespace QuanLyKhoApi.Controllers
             }
         }
 
-        [HttpGet("get-by-id/{id}")]
+        [HttpGet("/{id}")]
         public async Task<IActionResult> GetHangHoaById(Guid id)
         {
             try

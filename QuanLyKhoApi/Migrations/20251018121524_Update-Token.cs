@@ -10,7 +10,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace QuanLyKhoApi.Migrations
 {
     /// <inheritdoc />
-    public partial class Initial : Migration
+    public partial class UpdateToken : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -21,7 +21,8 @@ namespace QuanLyKhoApi.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Quyen = table.Column<string>(type: "text", nullable: false)
+                    Quyen = table.Column<string>(type: "text", nullable: false),
+                    Category = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -358,7 +359,6 @@ namespace QuanLyKhoApi.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    RefreshToken = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     ExpiryTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     IdTaiKhoan = table.Column<Guid>(type: "uuid", nullable: false)
                 },
@@ -450,11 +450,15 @@ namespace QuanLyKhoApi.Migrations
 
             migrationBuilder.InsertData(
                 table: "Claims",
-                columns: new[] { "Id", "Quyen" },
+                columns: new[] { "Id", "Category", "Quyen" },
                 values: new object[,]
                 {
-                    { 1, "User" },
-                    { 2, "Admin" }
+                    { 1, null, "User" },
+                    { 2, null, "Admin" },
+                    { 3, "NhanVien", "ThemNhanVien" },
+                    { 4, "NhanVien", "XoaNhanVien" },
+                    { 5, "NhanVien", "SuaNhanVien" },
+                    { 6, "NhanVien", "XemNhanVien" }
                 });
 
             migrationBuilder.InsertData(

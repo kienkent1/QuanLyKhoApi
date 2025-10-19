@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
+using Polly;
 using QuanLyKhoApi.Data;
 using QuanLyKhoApi.Dto;
 using QuanLyKhoApi.Helper;
@@ -15,28 +16,21 @@ namespace QuanLyKhoApi.Services
     {
 
 
-        public async Task<ServiceResult<PaginatedResult<List<NhanVien>>>> GetNhanVienAsync(string? query, int page, int pageSize )
+        public async Task<ServiceResult<PaginatedResult<List<NhanVien>>>> GetNhanVienAsync(string? query, int page, int pageSize, SortOBJ? sort)
         {
             try
             {
                 var nhanVien = db.NhanVien.AsQueryable();
                 if (query is not null)
                 {
-                    nhanVien = nhanVien.Where(nv => 
+                    nhanVien = nhanVien.Where(nv =>
                     nv.TenNhanVien.Contains(query) ||
                     nv.IdNhanVien.ToString().Contains(query) ||
                     nv.email.Contains(query));
                 }
-                var result = await Helper.Pagination<NhanVien>.PaginationAsync(nhanVien, page, pageSize);
-                int tongNV =await nhanVien.CountAsync();
-                return ServiceResult<PaginatedResult<List<NhanVien>>>.Ok(new PaginatedResult<List<NhanVien>>
-                {
-                    CurrentPage = page,
-                    PageSize = pageSize,
-                    TotalItems = tongNV,
-                    TotalPages = (int)Math.Ceiling((double)tongNV / pageSize),
-                    Data = result
-                });
+                var result = await Helper.Pagination<NhanVien>.PaginationAsync(nhanVien, page, pageSize, sort);
+                int tongNV = await nhanVien.CountAsync();
+                return ServiceResult<PaginatedResult<List<NhanVien>>>.Ok(result);
             }
             catch (Exception ex)
             {
