@@ -12,7 +12,7 @@ namespace QuanLyKhoApi.Data
         public Guid MaHH { get; set; }
 
         [ForeignKey(nameof(MaHH))]
-        [JsonIgnore]
+
         public HangHoa HangHoa { get; set; }
 
         [Required]

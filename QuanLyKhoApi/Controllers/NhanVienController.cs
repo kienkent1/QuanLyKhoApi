@@ -14,7 +14,7 @@ namespace QuanLyKhoApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class NhanVienController : ControllerBase
+    public class NhanVienController(INhanVienService service, AppDbContext db, AuthorizationService authorization) : ControllerBase
     {
         private readonly INhanVienService service;
         private readonly AppDbContext db;
@@ -57,16 +57,16 @@ namespace QuanLyKhoApi.Controllers
             }
             return vali;
         }
-
+        [Authorize]
         [HttpGet]
-        public async Task<ActionResult<List<NhanVien>>> GetAll(
-            [FromQuery] string? query,
+        public async Task<ActionResult<List<NhanVien>>> GetNhanVien(
+            [FromQuery] string? query = null,
             [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 12)
+            [FromQuery] int pageSize = 12,
+            [FromQuery] SortOBJ? sort = null)
         {
-            var nhanVien = await service.GetNhanVienAsync(query, page, pageSize);
-            return MyStatusCodeBase.MyStatusCode(this, nhanVien);
-        }
+                var nhanVien = await service.GetNhanVienAsync(query, page, pageSize, sort);
+                return MyStatusCodeBase.MyStatusCode(this, nhanVien);
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(Guid id)
@@ -74,17 +74,15 @@ namespace QuanLyKhoApi.Controllers
             var result = await service.GetNhanVienByIdAsync(id);
             return MyStatusCodeBase.MyStatusCode(this, result);
         }
-
         [Authorize]
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] NhanVienDto dto)
+        [HttpPost("ThemNhanVien")]
+        public async Task<IActionResult> ThemNhanVien([FromBody] NhanVienDto dto)
         {
             var iduser = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var iduserGuid = Guid.Parse(iduser);
-            var isHasClaim = await authorization.RoleHasClaimAsync(iduserGuid, "ThemNhanVien");
-            if (isHasClaim == false)
+            var isHasClaim = await authorization.RoleHasClaimAsync(iduser, "ThemNhanVien");
+            if (isHasClaim.Success == false)
             {
-                return StatusCode(403, "Bạn không có quyền truy cập chức năng này");
+                return MyStatusCodeBase.MyStatusCode(this, isHasClaim);
             }
             ValidateNhanVienDto Validate = await ValitdateNhanVien(dto);
             if (Validate.IsValid == false)
@@ -95,8 +93,9 @@ namespace QuanLyKhoApi.Controllers
             return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(Guid id, [FromForm] UpdateNhanVienDto dto)
+        [Authorize]
+        [HttpPatch("UpdateNhanVien/{id}")]
+        public async Task<IActionResult> updateNhanVien([FromQuery] Guid id, [FromForm] UpdateNhanVienDto dto)
         {
             var result = await service.UpdateNhanVienAsync(id, dto);
             return MyStatusCodeBase.MyStatusCode(this, result);
