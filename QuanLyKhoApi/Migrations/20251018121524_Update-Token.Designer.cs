@@ -13,8 +13,8 @@ using QuanLyKhoApi.Data;
 namespace QuanLyKhoApi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251017021009_Initial")]
-    partial class Initial
+    [Migration("20251018121524_Update-Token")]
+    partial class UpdateToken
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -140,6 +140,9 @@ namespace QuanLyKhoApi.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Category")
+                        .HasColumnType("text");
+
                     b.Property<string>("Quyen")
                         .IsRequired()
                         .HasColumnType("text");
@@ -158,6 +161,30 @@ namespace QuanLyKhoApi.Migrations
                         {
                             Id = 2,
                             Quyen = "Admin"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Category = "NhanVien",
+                            Quyen = "ThemNhanVien"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Category = "NhanVien",
+                            Quyen = "XoaNhanVien"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Category = "NhanVien",
+                            Quyen = "SuaNhanVien"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Category = "NhanVien",
+                            Quyen = "XemNhanVien"
                         });
                 });
 
@@ -559,11 +586,6 @@ namespace QuanLyKhoApi.Migrations
 
                     b.Property<Guid>("IdTaiKhoan")
                         .HasColumnType("uuid");
-
-                    b.Property<string>("RefreshToken")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
 
                     b.HasKey("Id");
 

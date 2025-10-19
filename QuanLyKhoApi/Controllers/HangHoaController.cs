@@ -29,14 +29,14 @@ namespace QuanLyKhoApi.Controllers
                 return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
-        [HttpGet("get-all")]
+        [HttpGet("/")]
         public async Task<IActionResult> GetAllHangHoa()
         {
                 var result = await _hangHoaService.GetAllHangHoaAsync();
                 return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
-        [HttpGet("get-by-id/{id}")]
+        [HttpGet("/{id}")]
         public async Task<IActionResult> GetHangHoaById(Guid id)
         {
                 var result = await _hangHoaService.GetHangHoaByIdAsync(id);

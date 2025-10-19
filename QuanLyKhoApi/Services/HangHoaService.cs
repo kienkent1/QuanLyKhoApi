@@ -64,7 +64,7 @@ namespace QuanLyKhoApi.Services
                 .Include(h => h.loai)
                 .Include(h => h.CauHinhs.Where(c => c.Deleted == false))
                 .Where(h => h.Deleted == false)
-                .Select(h => _mapper.Map<HangHoaDto>(h)) 
+                .Select(h => _mapper.Map<HangHoaDto>(h))
                 .ToListAsync();
         }
 
