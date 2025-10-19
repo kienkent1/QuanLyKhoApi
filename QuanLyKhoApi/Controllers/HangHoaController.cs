@@ -1,74 +1,86 @@
-﻿using AutoMapper;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using QuanLyKhoApi.Data;
 using QuanLyKhoApi.Dto;
 using QuanLyKhoApi.Helper;
 using QuanLyKhoApi.IServices;
+using System.Security.Claims;
 
 namespace QuanLyKhoApi.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
-    public class HangHoaController(IHangHoaService hangHoaService, IMapper mapper) : ControllerBase
+    [Route("api/[controller]")]
+    public class HangHoaController : ControllerBase
     {
-        private readonly IHangHoaService _hangHoaService = hangHoaService;
-        private readonly IMapper _mapper = mapper;
+        private readonly IHangHoaService service;
 
-        [HttpPost("create-hang-hoa")]
-        public async Task<IActionResult> CreateHangHoa([FromBody] HangHoaDto dto)
+        public HangHoaController(IHangHoaService service)
         {
-
-                var result = await _hangHoaService.CreateHangHoaAsync(dto);
-                return MyStatusCodeBase.MyStatusCode(this, result);
+            this.service = service;
         }
 
-        [HttpPost("create-cau-hinh")]
-        public async Task<IActionResult> CreateCauHinh([FromBody] CauHinhDto dto)
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] HangHoaDto dto)
         {
-                var result = await _hangHoaService.CreateCauHinhAsync(dto);
-                return MyStatusCodeBase.MyStatusCode(this, result);
+            var result = await service.CreateHangHoaAsync(dto);
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
-        [HttpGet("/")]
-        public async Task<IActionResult> GetAllHangHoa()
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
         {
-                var result = await _hangHoaService.GetAllHangHoaAsync();
-                return MyStatusCodeBase.MyStatusCode(this, result);
+            var result = await service.GetAllHangHoaAsync();
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
-        [HttpGet("/{id}")]
-        public async Task<IActionResult> GetHangHoaById(Guid id)
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(Guid id)
         {
-                var result = await _hangHoaService.GetHangHoaByIdAsync(id);
+            try
+            {
+                Console.WriteLine($"Controller nhận ID: {id}");
+                var result = await service.GetHangHoaByIdAsync(id);
                 return MyStatusCodeBase.MyStatusCode(this, result);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi trong Controller: {ex.Message}");
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
         }
 
-        [HttpPut("update-hang-hoa/{id}")]
-        public async Task<IActionResult> UpdateHangHoa(Guid id, [FromBody] HangHoaDto dto)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(Guid id, [FromBody] HangHoaDto dto)
         {
-                var result = await _hangHoaService.UpdateHangHoaAsync(id, dto);
-                return MyStatusCodeBase.MyStatusCode(this, result);
+            var result = await service.UpdateHangHoaAsync(id, dto);
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
-        [HttpDelete("delete-hang-hoa/{id}")]
-        public async Task<IActionResult> DeleteHangHoa(Guid id)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(Guid id)
         {
-                var result = await _hangHoaService.DeleteHangHoaAsync(id);
-                return MyStatusCodeBase.MyStatusCode(this, result);
+            var result = await service.DeleteHangHoaAsync(id);
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
-        [HttpPut("update-cau-hinh/{id}")]
-        public async Task<IActionResult> UpdateCauHinh(Guid id, [FromBody] CauHinhDto dto)
+        [HttpGet("{hangHoaId}/configs")]
+        public async Task<IActionResult> GetConfigs(Guid hangHoaId)
         {
-                var result = await _hangHoaService.UpdateCauHinhAsync(id, dto);
-                return MyStatusCodeBase.MyStatusCode(this, result);
+            var result = await service.GetCauHinhByHangHoaIdAsync(hangHoaId);
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
-        [HttpDelete("delete-cau-hinh/{id}")]
-        public async Task<IActionResult> DeleteCauHinh(Guid id)
+        [HttpPost("configs")]
+        public async Task<IActionResult> CreateMultipleConfigs([FromBody] CreateMultipleConfigsDto dto)
         {
-                var result = await _hangHoaService.DeleteCauHinhAsync(id);
-                return MyStatusCodeBase.MyStatusCode(this, result);
+            var result = await service.CreateMultipleConfigsAsync(dto);
+            return MyStatusCodeBase.MyStatusCode(this, result);
+        }
+
+        [HttpGet("canh-bao")]
+        public async Task<IActionResult> GetHangHoaCanhBao()
+        {
+            var result = await service.GetHangHoaCanhBaoAsync();
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
     }
 }

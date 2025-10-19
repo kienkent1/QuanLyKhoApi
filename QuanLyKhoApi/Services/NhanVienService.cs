@@ -38,6 +38,42 @@ namespace QuanLyKhoApi.Services
             }
         }
 
+        public async Task<ServiceResult<NhanVienDto>> GetNhanVienByIdAsync(Guid id)
+        {
+            try
+            {
+                var nhanVien = await db.NhanVien.FirstOrDefaultAsync(nv => nv.IdNhanVien == id);
+                if (nhanVien is null)
+                    return ServiceResult<NhanVienDto>.Fail("Không tìm thấy nhân viên", 404);
+
+                var result = mapper.Map<NhanVienDto>(nhanVien);
+                return ServiceResult<NhanVienDto>.Ok(result, 200, "Lấy thông tin nhân viên thành công");
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult<NhanVienDto>.Fail($"Lỗi: {ex.Message}", 500);
+            }
+        }
+
+        public async Task<ServiceResult<bool>> DeleteNhanVienAsync(Guid id)
+        {
+            try
+            {
+                var nhanVien = await db.NhanVien.FirstOrDefaultAsync(nv => nv.IdNhanVien == id);
+                if (nhanVien is null)
+                    return ServiceResult<bool>.Fail("Không tìm thấy nhân viên", 404);
+
+                db.NhanVien.Remove(nhanVien);
+                await db.SaveChangesAsync();
+
+                return ServiceResult<bool>.Ok(true, 200, "Xóa nhân viên thành công");
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult<bool>.Fail($"Lỗi: {ex.Message}", 500);
+            }
+        }
+
         public async Task<ServiceResult<ProfileUserDto>> ProfileUser(string id)
         {
             var profile = await db.NhanVien.FirstOrDefaultAsync(nv => nv.IdNhanVien.ToString() == id);
@@ -57,7 +93,6 @@ namespace QuanLyKhoApi.Services
                 UpdateAt = profile.UpdateAt
             };
             return ServiceResult<ProfileUserDto>.Ok(result);
-
         }
 
         public async Task<ServiceResult<NhanVienDto>> ThemNhanVienAsync(NhanVienDto nhanVien)
@@ -109,6 +144,7 @@ namespace QuanLyKhoApi.Services
                 nv.chucVu = dto.chucVu;
 
             nv.trangthai = dto.trangthai;
+            nv.UpdateAt = DateTime.UtcNow;
             db.NhanVien.Update(nv);
             db.SaveChanges();
             return ServiceResult<UpdateNhanVienDto>.Ok(dto);
@@ -142,6 +178,7 @@ namespace QuanLyKhoApi.Services
                 var urlHinh = await git.UpdateOneImg(file, "User");
                 if (urlHinh is null) return ServiceResult<string>.Fail("Cập nhật ảnh đại diện thất bại", 500);
                 user.UrlHinh = urlHinh.Url;
+                user.UpdateAt = DateTime.UtcNow;
                 db.NhanVien.Update(user);
                 await db.SaveChangesAsync();
                 return ServiceResult<string>.Ok(user.UrlHinh);
@@ -174,6 +211,5 @@ namespace QuanLyKhoApi.Services
                 return ServiceResult<HashSet<string>>.Fail($"Lỗi: {ex.Message}", 500);
             }
         }
-
     }
 }

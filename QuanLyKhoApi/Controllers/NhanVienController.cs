@@ -16,11 +16,18 @@ namespace QuanLyKhoApi.Controllers
     [ApiController]
     public class NhanVienController(INhanVienService service, AppDbContext db, AuthorizationService authorization) : ControllerBase
     {
+        private readonly INhanVienService service;
+        private readonly AppDbContext db;
+        private readonly AuthorizationService authorization;
+
+
+
         private class ValidateNhanVienDto
         {
             public bool IsValid { get; set; } = true;
             public string Message { get; set; }
         }
+
         private async Task<ValidateNhanVienDto> ValitdateNhanVien(NhanVienDto dto)
         {
             var vali = new ValidateNhanVienDto();
@@ -57,6 +64,12 @@ namespace QuanLyKhoApi.Controllers
             return MyStatusCodeBase.MyStatusCode(this, nhanVien);
 
         }
+        //[HttpGet("{id}")]
+        //public async Task<IActionResult> GetById(Guid id)
+        //{
+        //    var result = await service.GetNhanVienByIdAsync(id);
+        //    return MyStatusCodeBase.MyStatusCode(this, result);
+        //}
         [Authorize]
         [HttpPost("ThemNhanVien")]
         public async Task<IActionResult> ThemNhanVien([FromBody] NhanVienDto dto)
@@ -83,15 +96,16 @@ namespace QuanLyKhoApi.Controllers
             var result = await service.UpdateNhanVienAsync(id, dto);
             return MyStatusCodeBase.MyStatusCode(this, result);
         }
-        [HttpPatch("UpdateAvatar/{id}")]
-        public async Task<IActionResult> UpdateAvatarNV([FromRoute] string id, IFormFile file)
+
+        [HttpPatch("{id}/avatar")]
+        public async Task<IActionResult> UpdateAvatar(Guid id, IFormFile file)
         {
-            var result = await service.UpdateAvatarNV(id, file);
+            var result = await service.UpdateAvatarNV(id.ToString(), file);
             return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
         [Authorize]
-        [HttpGet("ProfileUser")]
+        [HttpGet("me")]
         public async Task<IActionResult> ProfileUser()
         {
             var id = User.FindFirstValue(ClaimTypes.NameIdentifier).ToString();
@@ -99,7 +113,7 @@ namespace QuanLyKhoApi.Controllers
             return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
-        [HttpPost("ChangePassword/{id}")]
+        [HttpPost("{id}/password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePassworDto Pass, [FromRoute] Guid id)
         {
             var result = await service.ChangePassword(Pass, id);
@@ -107,11 +121,18 @@ namespace QuanLyKhoApi.Controllers
         }
 
         [Authorize]
-        [HttpGet("GetClaimUser")]
+        [HttpGet("permissions")]
         public async Task<IActionResult> GetClaimUser()
         {
             var id = User.FindFirstValue(ClaimTypes.NameIdentifier).ToString();
             var result = await service.GetClaimUser(id);
+            return MyStatusCodeBase.MyStatusCode(this, result);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            var result = await service.DeleteNhanVienAsync(id);
             return MyStatusCodeBase.MyStatusCode(this, result);
         }
     }

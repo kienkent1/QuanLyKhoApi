@@ -37,6 +37,7 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddApplicationServices();
+builder.Services.AddScoped<AuthorizationService>();
 
 builder.Services.Configure<GitHubOptions>(builder.Configuration.GetSection(GitHubOptions.GitHub));
 
