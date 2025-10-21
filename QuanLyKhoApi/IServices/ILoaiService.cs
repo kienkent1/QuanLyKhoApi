@@ -7,8 +7,8 @@ namespace QuanLyKhoApi.IServices
     public interface ILoaiService
     {
         Task<ServiceResult<LoaiDto>> ThemLoaiAsync(LoaiDto loai);
-        Task<ServiceResult<LoaiDto?>> SuaLoai(int id, LoaiDto loai);
-        Task<ServiceResult<List<LoaiDto>>> GetLoai(string? query);
+        Task<ServiceResult<UpdateLoaiDto?>> SuaLoai(int id, UpdateLoaiDto loai);
+        Task<ServiceResult<PaginatedResult<List<Loai>>>> GetLoai(string? query, int page, int pageSize, SortOBJ? sort);
         Task<ServiceResult<LoaiDto?>> GetLoaiById(int id);
         Task<ServiceResult<bool>> XoaLoaiTamAsync(int id);
     }

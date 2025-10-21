@@ -17,6 +17,11 @@ namespace QuanLyKhoApi.Data
         [Required]
         public decimal DonGia { get; set; }
 
+        [Required]
+        public int MaPhieuNhap { get; set; }
+
+        [ForeignKey(nameof(MaPhieuNhap))]
+        public PhieuNhap PhieuNhap { get; set; }
 
         [ForeignKey(nameof(MaCauHinh))]
         public CauHinh CauHinh { get; set; }

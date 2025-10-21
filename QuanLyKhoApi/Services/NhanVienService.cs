@@ -26,7 +26,8 @@ namespace QuanLyKhoApi.Services
                     nhanVien = nhanVien.Where(nv =>
                     nv.TenNhanVien.Contains(query) ||
                     nv.IdNhanVien.ToString().Contains(query) ||
-                    nv.email.Contains(query));
+                    nv.email.Contains(query) ||
+                    nv.chucVu.Contains(query));
                 }
                 var result = await Helper.Pagination<NhanVien>.PaginationAsync(nhanVien, page, pageSize, sort);
                 int tongNV = await nhanVien.CountAsync();

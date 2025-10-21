@@ -4,160 +4,215 @@ using QuanLyKhoApi.Data;
 using QuanLyKhoApi.Dto;
 using QuanLyKhoApi.Helper;
 using QuanLyKhoApi.IServices;
+using System.Text;
 
 namespace QuanLyKhoApi.Services
 {
-    public class HangHoaService : IHangHoaService
+    public class HangHoaService(AppDbContext _context, IMapper mapper, GitHubImageService git, Ironbarcode barCode) : IHangHoaService
     {
-        private readonly AppDbContext _context;
-        private readonly IMapper _mapper;
 
-        public HangHoaService(AppDbContext context, IMapper mapper)
-        {
-            _context = context;
-            _mapper = mapper;
-        }
-
-        public async Task<ServiceResult<HangHoa>> CreateHangHoaAsync(HangHoaDto dto)
+        public async Task<ServiceResult<HangHoaDto>> CreateHangHoaAsync(HangHoaDto dto)
         {
             try
             {
                 var loai = await _context.Loai.FindAsync(dto.IdLoai);
                 if (loai is null)
-                    return ServiceResult<HangHoa>.Fail("Loại hàng hóa không tồn tại", 404);
+                    return ServiceResult<HangHoaDto>.Fail("Loại hàng hóa không tồn tại", 404);
 
                 var nhaCungCap = await _context.NhaCungCap.FindAsync(dto.NhaCungCapId);
                 if (nhaCungCap is null)
-                    return ServiceResult<HangHoa>.Fail("Nhà cung cấp không tồn tại", 404);
+                    return ServiceResult<HangHoaDto>.Fail("Nhà cung cấp không tồn tại", 404);
 
-                var newMaHH = Guid.NewGuid();
-                Console.WriteLine($"Tạo MaHH mới: {newMaHH}");
-
-                var hangHoa = new HangHoa
-                {
-                    MaHH = newMaHH,
-                    Model = string.IsNullOrEmpty(dto.Model) ? "Chưa đặt tên" : dto.Model,
-                    MoTa = dto.MoTa,
-                    DonViTinh = string.IsNullOrEmpty(dto.DonViTinh) ? "Cái" : dto.DonViTinh,
-                    NhaCungCapId = dto.NhaCungCapId,
-                    SoLuongTon = dto.SoLuongTon,
-                    IdLoai = dto.IdLoai,
-                    Deleted = false
-                };
+                var hangHoa = mapper.Map<HangHoa>(dto);
+                hangHoa.Deleted = false;
 
                 _context.HangHoa.Add(hangHoa);
                 await _context.SaveChangesAsync();
 
-                Console.WriteLine($"Lưu thành công MaHH: {hangHoa.MaHH}");
 
-                return ServiceResult<HangHoa>.Ok(hangHoa, 201, "Tạo hàng hóa thành công");
+                return ServiceResult<HangHoaDto>.Ok(dto);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Lỗi khi tạo hàng hóa: {ex.Message}");
-                return ServiceResult<HangHoa>.Fail($"Lỗi hệ thống khi tạo hàng hóa: {ex.Message}", 500);
+                return ServiceResult<HangHoaDto>.Fail($"Lỗi hệ thống khi tạo hàng hóa: {ex.Message}", 500);
             }
         }
 
-        public async Task<ServiceResult<IEnumerable<HangHoaDto>>> GetAllHangHoaAsync()
+        public async Task<ServiceResult<DetailHangHoaDto>> FindByBarCode(IFormFile file)
         {
             try
             {
-                var hangHoas = await _context.HangHoa
-                    .Where(h => h.Deleted == false)
-                    .Select(h => new HangHoaDto
+                var codeResult = await barCode.ReadBarcode(file);
+                var originalId = Encoding.UTF8.GetString(Convert.FromBase64String(codeResult));
+
+                if (originalId is null || string.IsNullOrEmpty(originalId))
+                    return ServiceResult<DetailHangHoaDto>.Fail("Không đọc được mã vạch", 400);
+
+                var result = await GetHangHoaByIdAsync(originalId);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult<DetailHangHoaDto>.Fail($"Lỗi hệ thống khi quét mã: {ex.Message}", 500);
+
+            }
+        }
+
+        public async Task<ServiceResult<string>> GenBarCode(string id)
+        {
+            try
+            {
+                var isHangHoa = await _context.HangHoa.AnyAsync(h => h.MaHH.ToString() == id && h.Deleted != true);
+                if (!isHangHoa)
+                    return ServiceResult<string>.Fail("Hàng hóa không tồn tại", 404);
+                var barCodeUrl = await barCode.GeneratedBarcode(id);
+                return ServiceResult<string>.Ok(barCodeUrl);
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult<string>.Fail($"Lỗi hệ thống khi tạo mã vạch: {ex.Message}", 500);
+            }
+        }
+
+        public async Task<ServiceResult<PaginatedResult<List<ListHangHoaDto>>>> GetAllHangHoaAsync(string? query, int page, int pageSize, SortOBJ? sort)
+        {
+            try
+            {
+                var hangHoas = _context.HangHoa
+                    .Include(h => h.loai)
+                    .Include(h => h.NhaCungCap)
+                    .Where(h => h.Deleted != true)
+                    .Select(h => new ListHangHoaDto
                     {
-                        MaHH = h.MaHH,
+                        Id = h.MaHH,
                         Model = h.Model,
                         MoTa = h.MoTa,
                         DonViTinh = h.DonViTinh,
                         NhaCungCapId = h.NhaCungCapId,
+                        TenNhaCungCap = h.NhaCungCap.TenNCC,
                         SoLuongTon = h.SoLuongTon,
-                        IdLoai = h.IdLoai
+                        IdLoai = h.IdLoai,
+                        TenLoai = h.loai.TenLoai,
+                        ThongBaoSoLuong = AddCanhBaoSoLuong(h.Model, h.SoLuongTon, h.DonViTinh),
                     })
-                    .ToListAsync();
-
-                var hangHoasWithCanhBao = hangHoas.Select(h => AddCanhBaoSoLuong(h)).ToList();
-
-                return ServiceResult<IEnumerable<HangHoaDto>>.Ok(hangHoasWithCanhBao, 200, "Lấy danh sách hàng hóa thành công");
-            }
-            catch (Exception ex)
-            {
-                return ServiceResult<IEnumerable<HangHoaDto>>.Fail($"Lỗi hệ thống khi lấy danh sách hàng hóa: {ex.Message}", 500);
-            }
-        }
-
-        public async Task<ServiceResult<HangHoaDto>> GetHangHoaByIdAsync(Guid id)
-        {
-            try
-            {
-                Console.WriteLine($"Tìm hàng hóa với ID: {id}");
-
-                var hangHoa = await _context.HangHoa
-                    .Where(h => h.Deleted == false && h.MaHH == id)
-                    .Select(h => new HangHoaDto
-                    {
-                        MaHH = h.MaHH,
-                        Model = h.Model,
-                        MoTa = h.MoTa,
-                        DonViTinh = h.DonViTinh,
-                        NhaCungCapId = h.NhaCungCapId,
-                        SoLuongTon = h.SoLuongTon,
-                        IdLoai = h.IdLoai
-                    })
-                    .FirstOrDefaultAsync();
-
-                Console.WriteLine($"Kết quả tìm kiếm: {hangHoa != null}");
-
-                if (hangHoa == null)
+                    .AsQueryable();
+                if (!string.IsNullOrEmpty(query))
                 {
-                    Console.WriteLine($"Không tìm thấy hàng hóa với ID: {id}");
-                    return ServiceResult<HangHoaDto>.Fail("Không tìm thấy hàng hóa", 404);
+                    hangHoas = hangHoas.Where(
+                        h => h.Model.Contains(query) ||
+                        h.TenLoai.Contains(query) ||
+                        h.TenNhaCungCap.Contains(query) ||
+                        h.Id.ToString().Contains(query)
+                    );
+                }
+                var result = await Pagination<ListHangHoaDto>.PaginationAsync(hangHoas, page, pageSize, sort);
+
+                return ServiceResult<PaginatedResult<List<ListHangHoaDto>>>.Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult<PaginatedResult<List<ListHangHoaDto>>>.Fail($"Lỗi hệ thống khi lấy danh sách hàng hóa: {ex.Message}", 500);
+            }
+        }
+
+        public async Task<ServiceResult<DetailHangHoaDto>> GetHangHoaByIdAsync(string id)
+        {
+            try
+            {
+                var hangHoa = await _context.HangHoa
+                    .Include(h => h.CauHinhs.Where(c => c.Deleted != true))
+                    .ThenInclude(c => c.HinhAnhs)
+                    .Include(h => h.NhaCungCap)
+                    .Include(h => h.loai)
+                    .FirstOrDefaultAsync(h => h.Deleted == false && h.MaHH.ToString() == id);
+
+                if (hangHoa is null)
+                {
+                    return ServiceResult<DetailHangHoaDto>.Fail("Không tìm thấy hàng hóa", 404);
                 }
 
-                hangHoa = AddCanhBaoSoLuong(hangHoa);
+                var hangHoaDto = new DetailHangHoaDto
+                {
+                    Id = hangHoa.MaHH,
+                    Model = hangHoa.Model,
+                    MoTa = hangHoa.MoTa,
+                    DonViTinh = hangHoa.DonViTinh,
+                    NhaCungCapId = hangHoa.NhaCungCapId,
+                    TenNhaCungCap = hangHoa.NhaCungCap.Deleted == true ? "Nhà cung cấp đã bị xóa" : hangHoa.NhaCungCap.TenNCC,
+                    SoLuongTon = hangHoa.SoLuongTon,
+                    IdLoai = hangHoa.IdLoai,
+                    TenLoai = hangHoa.loai.Deleted == true ? "Loại đã bị xóa" : hangHoa.loai.TenLoai,
+                    CauHinhs = hangHoa.CauHinhs.Select(c => new CauHinhDto
+                    {
+                        Id = c.Id,
+                        MaHH = c.MaHH,
+                        GiaBan = c.GiaBan,
+                        SoLuongTon = c.SoLuongTon,
+                        MoTa = c.MoTa,
+                        MauSac = c.MauSac,
+                        ColorCode = c.ColorCode,
+                        Ram = c.Ram,
+                        Rom = c.Rom,
+                        SoLuongHidden = c.SoLuongHidden,
+                        CanhBaoSoLuong = AddCanhBaoSoLuong(
+                            CanhBaoMessage(hangHoa.Model, c.MauSac, c.Ram, c.Rom),
+                            c.SoLuongTon, hangHoa.DonViTinh),
+                        HinhAnh = c.HinhAnhs.Select(img => new HinhAnhDto
+                        {
+                            Id = img.Id,
+                            Url = img.Url,
+                            CreateAt = img.CreateAt,
+                        }).OrderBy(img => img.CreateAt).ToList()
+                    }).ToList()
+                };
 
-                Console.WriteLine($"Tìm thấy hàng hóa: {hangHoa.Model}");
-                return ServiceResult<HangHoaDto>.Ok(hangHoa, 200, "Lấy thông tin hàng hóa thành công");
+                return ServiceResult<DetailHangHoaDto>.Ok(hangHoaDto);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Lỗi khi lấy hàng hóa theo ID: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
-                return ServiceResult<HangHoaDto>.Fail($"Lỗi hệ thống khi lấy thông tin hàng hóa: {ex.Message}", 500);
+                return ServiceResult<DetailHangHoaDto>.Fail($"Lỗi hệ thống khi lấy thông tin hàng hóa: {ex.Message}", 500);
             }
         }
+        private static string CanhBaoMessage(string model, string mau, string ram, string rom)
+        {
+            string result = model;
+            if (mau is not null && !string.IsNullOrEmpty(mau)) result += ", Màu: " + mau;
+            if (ram is not null && !string.IsNullOrEmpty(ram)) result += ", Ram: " + ram + "GB";
+            if (rom is not null && !string.IsNullOrEmpty(rom)) result += ", Rom: " + rom + "GB";
+            return result += ".";
+        }
 
-        public async Task<ServiceResult<HangHoa>> UpdateHangHoaAsync(Guid id, HangHoaDto dto)
+        public async Task<ServiceResult<HangHoaDto>> UpdateHangHoaAsync(Guid id, HangHoaDto dto)
         {
             try
             {
                 var hangHoa = await _context.HangHoa.FindAsync(id);
                 if (hangHoa == null)
-                    return ServiceResult<HangHoa>.Fail("Không tìm thấy hàng hóa", 404);
+                    return ServiceResult<HangHoaDto>.Fail("Không tìm thấy hàng hóa", 404);
 
                 var loai = await _context.Loai.FindAsync(dto.IdLoai);
                 if (loai == null)
-                    return ServiceResult<HangHoa>.Fail("Loại hàng hóa không tồn tại", 404);
+                    return ServiceResult<HangHoaDto>.Fail("Loại hàng hóa không tồn tại", 404);
 
                 var nhaCungCap = await _context.NhaCungCap.FindAsync(dto.NhaCungCapId);
                 if (nhaCungCap == null)
-                    return ServiceResult<HangHoa>.Fail("Nhà cung cấp không tồn tại", 404);
+                    return ServiceResult<HangHoaDto>.Fail("Nhà cung cấp không tồn tại", 404);
 
                 hangHoa.Model = dto.Model;
                 hangHoa.MoTa = dto.MoTa;
-                hangHoa.DonViTinh = dto.DonViTinh;
+                hangHoa.DonViTinh = dto.DonViTinh != null ? dto.DonViTinh : "cái";
                 hangHoa.NhaCungCapId = dto.NhaCungCapId;
                 hangHoa.SoLuongTon = dto.SoLuongTon;
                 hangHoa.IdLoai = dto.IdLoai;
+                _context.Update(hangHoa);
 
                 await _context.SaveChangesAsync();
 
-                return ServiceResult<HangHoa>.Ok(hangHoa, 200, "Cập nhật hàng hóa thành công");
+                return ServiceResult<HangHoaDto>.Ok(dto, 200, "Cập nhật hàng hóa thành công");
             }
             catch (Exception ex)
             {
-                return ServiceResult<HangHoa>.Fail($"Lỗi hệ thống khi cập nhật hàng hóa: {ex.Message}", 500);
+                return ServiceResult<HangHoaDto>.Fail($"Lỗi hệ thống khi cập nhật hàng hóa: {ex.Message}", 500);
             }
         }
 
@@ -182,120 +237,156 @@ namespace QuanLyKhoApi.Services
             }
         }
 
-        public async Task<ServiceResult<IEnumerable<CauHinhDto>>> GetCauHinhByHangHoaIdAsync(Guid hangHoaId)
+        public async Task<ServiceResult<CauHinhDto>> GetCauHinhById(Guid id)
         {
             try
             {
-                var cauHinhs = await _context.CauHinh
-                    .Where(c => c.MaHH == hangHoaId && c.Deleted == false)
-                    .Select(c => new CauHinhDto
-                    {
-                        Id = c.Id,
-                        MaHH = c.MaHH,
-                        GiaBan = c.GiaBan,
-                        SoLuongTon = c.SoLuongTon,
-                        MoTa = c.MoTa,
-                        MauSac = c.MauSac,
-                        ColorCode = c.ColorCode,
-                        Ram = c.Ram,
-                        Rom = c.Rom,
-                        SoLuongHidden = c.SoLuongHidden
-                    })
-                    .ToListAsync();
+                var c = await _context.CauHinh
+                    .Include(c => c.HinhAnhs)
 
-                return ServiceResult<IEnumerable<CauHinhDto>>.Ok(cauHinhs, 200, "Lấy danh sách cấu hình thành công");
+                    .FirstOrDefaultAsync(c => c.Id == id && c.Deleted != true);
+                if (c == null)
+                {
+                    return ServiceResult<CauHinhDto>.Fail("Cấu hình không tồn tại", 404);
+                }
+                var selectCauHinh = new CauHinhDto
+                {
+                    Id = c.Id,
+                    MaHH = c.MaHH,
+                    GiaBan = c.GiaBan,
+                    SoLuongTon = c.SoLuongTon,
+                    MoTa = c.MoTa,
+                    MauSac = c.MauSac,
+                    ColorCode = c.ColorCode,
+                    Ram = c.Ram,
+                    Rom = c.Rom,
+                    SoLuongHidden = c.SoLuongHidden,
+                    HinhAnh = c.HinhAnhs.Select(img => new HinhAnhDto
+                    {
+                        Url = img.Url,
+                        CreateAt = img.CreateAt,
+                    }).OrderBy(img => img.CreateAt).ToList()
+                };
+
+                return ServiceResult<CauHinhDto>.Ok(selectCauHinh);
             }
             catch (Exception ex)
             {
-                return ServiceResult<IEnumerable<CauHinhDto>>.Fail($"Lỗi hệ thống khi lấy danh sách cấu hình: {ex.Message}", 500);
+                return ServiceResult<CauHinhDto>.Fail($"Lỗi hệ thống khi lấy danh sách cấu hình: {ex.Message}", 500);
             }
         }
 
-        public async Task<ServiceResult<List<CauHinh>>> CreateMultipleConfigsAsync(CreateMultipleConfigsDto dto)
+        public async Task<ServiceResult<List<CreateCauHinhDto>>> CreateMultipleConfigsAsync(Guid maHH, List<CreateCauHinhDto> dto)
         {
             try
             {
-                var hangHoa = await _context.HangHoa.FindAsync(dto.MaHH);
-                if (hangHoa == null)
-                    return ServiceResult<List<CauHinh>>.Fail("Không tìm thấy hàng hóa", 404);
+                var hangHoa = await _context.HangHoa.FindAsync(maHH);
+                if (hangHoa is null)
+                    return ServiceResult<List<CreateCauHinhDto>>.Fail("Không tìm thấy hàng hóa", 404);
 
-                var configs = new List<CauHinh>();
+                var configs = new List<CreateCauHinhDto>();
 
                 using var transaction = await _context.Database.BeginTransactionAsync();
 
-                foreach (var configDto in dto.Configs)
+                foreach (var configDto in dto)
                 {
-                    var config = new CauHinh
+                    var config = mapper.Map<CauHinh>(configDto);
+                    if (configDto.HinhAnh is not null && configDto.HinhAnh.Count > 0)
                     {
-                        Id = Guid.NewGuid(),
-                        MaHH = dto.MaHH,
-                        GiaBan = configDto.GiaBan,
-                        SoLuongTon = configDto.SoLuongTon,
-                        MoTa = configDto.MoTa,
-                        MauSac = configDto.MauSac,
-                        ColorCode = configDto.ColorCode,
-                        Ram = configDto.Ram,
-                        Rom = configDto.Rom,
-                        SoLuongHidden = configDto.SoLuongHidden ?? 0,
-                        Deleted = false
-                    };
-
+                        var imgUrl = await git.UpdateimgList(configDto.HinhAnh.ToArray(), "CauHinh");
+                        foreach (var img in imgUrl)
+                        {
+                            var hinhAnh = new HinhAnhHH
+                            {
+                                Url = img.Url,
+                                CreateAt = DateTime.UtcNow,
+                            };
+                            config.HinhAnhs.Add(hinhAnh);
+                            _context.HinhAnhHH.Add(hinhAnh);
+                        }
+                    }
                     _context.CauHinh.Add(config);
-                    configs.Add(config);
+                    configs.Add(configDto);
                 }
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                return ServiceResult<List<CauHinh>>.Ok(configs, 201, "Tạo nhiều cấu hình thành công");
+                return ServiceResult<List<CreateCauHinhDto>>.Ok(configs);
             }
             catch (Exception ex)
             {
-                return ServiceResult<List<CauHinh>>.Fail($"Lỗi hệ thống khi tạo nhiều cấu hình: {ex.Message}", 500);
+                return ServiceResult<List<CreateCauHinhDto>>.Fail($"Lỗi hệ thống khi tạo nhiều cấu hình: {ex.Message}", 500);
             }
         }
 
-        public async Task<ServiceResult<IEnumerable<HangHoaDto>>> GetHangHoaCanhBaoAsync()
+        public async Task<ServiceResult<List<HinhAnhDto>>> AddHinhAnhCauHing(Guid id, IFormFile[] files)
         {
             try
             {
-                var hangHoas = await _context.HangHoa
-                    .Where(h => h.Deleted == false && h.SoLuongTon < 10)
-                    .Select(h => new HangHoaDto
-                    {
-                        MaHH = h.MaHH,
-                        Model = h.Model,
-                        MoTa = h.MoTa,
-                        DonViTinh = h.DonViTinh,
-                        NhaCungCapId = h.NhaCungCapId,
-                        SoLuongTon = h.SoLuongTon,
-                        IdLoai = h.IdLoai,
-                        CanhBaoSoLuong = true,
-                        ThongBaoSoLuong = $"Cảnh báo: Số lượng tồn của {h.Model} chỉ còn {h.SoLuongTon} {h.DonViTinh}. Vui lòng nhập thêm hàng!"
-                    })
-                    .ToListAsync();
+                var cauHinh = await _context.CauHinh.FindAsync(id);
+                if (cauHinh is null)
+                    return ServiceResult<List<HinhAnhDto>>.Fail("Không tìm thấy cấu hình hàng hóa", 404);
+                var imgUrls = await git.UpdateimgList(files, "CauHinh");
+                if (imgUrls is null) return ServiceResult<List<HinhAnhDto>>.Fail("Lỗi khi tải hình ảnh lên GitHub", 500);
 
-                return ServiceResult<IEnumerable<HangHoaDto>>.Ok(hangHoas, 200, $"Tìm thấy {hangHoas.Count} hàng hóa cần cảnh báo");
+                foreach (var img in imgUrls)
+                {
+                    var hinhAnh = new HinhAnhHH
+                    {
+                        Url = img.Url,
+                        CreateAt = DateTime.UtcNow,
+                    };
+                    cauHinh.HinhAnhs.Add(hinhAnh);
+                    _context.HinhAnhHH.Add(hinhAnh);
+                }
+                await _context.SaveChangesAsync();
+                return ServiceResult<List<HinhAnhDto>>.Ok(cauHinh.HinhAnhs.Select(img => new HinhAnhDto
+                {
+                    Url = img.Url,
+                    CreateAt = img.CreateAt,
+                }).ToList());
+
             }
             catch (Exception ex)
             {
-                return ServiceResult<IEnumerable<HangHoaDto>>.Fail($"Lỗi hệ thống khi lấy hàng hóa cảnh báo: {ex.Message}", 500);
+                return ServiceResult<List<HinhAnhDto>>.Fail($"Lỗi hệ thống khi thêm hình ảnh cấu hình: {ex.Message}", 500);
             }
         }
-        private HangHoaDto AddCanhBaoSoLuong(HangHoaDto hangHoa)
+
+        public async Task<ServiceResult<bool>> DeleteHinhAnhCauHinhAsync(Guid[] ids)
         {
-            if (hangHoa.SoLuongTon < 10)
+            try
             {
-                hangHoa.CanhBaoSoLuong = true;
-                hangHoa.ThongBaoSoLuong = $"Cảnh báo: Số lượng tồn của {hangHoa.Model} chỉ còn {hangHoa.SoLuongTon} {hangHoa.DonViTinh}. Vui lòng nhập thêm hàng!";
+                var hinhAnhList = await _context.HinhAnhHH.Where(img => ids.Contains(img.Id)).ToListAsync();
+                if (hinhAnhList == null || !hinhAnhList.Any())
+                    return ServiceResult<bool>.Fail("Không tìm thấy hình ảnh cấu hình", 404);
+
+                foreach (var img in hinhAnhList)
+                {
+                    _context.HinhAnhHH.Remove(img);
+                }
+
+                await _context.SaveChangesAsync();
+
+                return ServiceResult<bool>.Ok(true);
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult<bool>.Fail($"Lỗi hệ thống khi xóa hình ảnh cấu hình: {ex.Message}", 500);
+            }
+        }
+        private static string AddCanhBaoSoLuong(string ten, int soLuong, string? donVi)
+        {
+            if (soLuong < 10)
+            {
+                return $"Cảnh báo: Số lượng tồn của {ten} chỉ còn {soLuong} {donVi}. Vui lòng nhập thêm hàng!";
             }
             else
             {
-                hangHoa.CanhBaoSoLuong = false;
-                hangHoa.ThongBaoSoLuong = null;
+                return null;
             }
-
-            return hangHoa;
         }
+
     }
 }

@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using QuanLyKhoApi.Data;
 using QuanLyKhoApi.Dto;
+using System.Text.Json;
 
 namespace QuanLyKhoApi.Profiles
 {
@@ -9,11 +10,17 @@ namespace QuanLyKhoApi.Profiles
         public NhaCungCapProfile()
         {
             CreateMap<NhaCungCapDto, NhaCungCap>()
-                .ForMember(dest => dest.MaNCC, opt => opt.Ignore())
-                .ForMember(dest => dest.Deleted, opt => opt.MapFrom(src => false))
-                .ForMember(dest => dest.DeletedAt, opt => opt.Ignore())
-                .ForMember(dest => dest.CreateAt, opt => opt.Ignore());
-            CreateMap<NhaCungCap, NhaCungCapDto>();
+                .ForMember(dest => dest.DiaChi, opt => opt.MapFrom(src => DeserializeDiaChi(src.DiaChi)))
+                .ReverseMap();
+
+
+            CreateMap<NhaCungCapUpdateDto, NhaCungCap>()
+                 .ForMember(dest => dest.DiaChi, opt => opt.MapFrom(src => DeserializeDiaChi(src.DiaChi)))
+                 .ReverseMap();
+        }
+        private static Dictionary<string, object>? DeserializeDiaChi(string? diaChi)
+        {
+            return diaChi == null ? null : JsonSerializer.Deserialize<Dictionary<string, object>>(diaChi);
         }
     }
 }

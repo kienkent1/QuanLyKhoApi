@@ -6,13 +6,16 @@ namespace QuanLyKhoApi.IServices
 {
     public interface IHangHoaService
     {
-        Task<ServiceResult<HangHoa>> CreateHangHoaAsync(HangHoaDto dto);
-        Task<ServiceResult<IEnumerable<HangHoaDto>>> GetAllHangHoaAsync();
-        Task<ServiceResult<HangHoaDto>> GetHangHoaByIdAsync(Guid id);
-        Task<ServiceResult<HangHoa>> UpdateHangHoaAsync(Guid id, HangHoaDto dto);
+        Task<ServiceResult<HangHoaDto>> CreateHangHoaAsync(HangHoaDto dto);
+        Task<ServiceResult<PaginatedResult<List<ListHangHoaDto>>>> GetAllHangHoaAsync(string? query, int page, int pageSize, SortOBJ? sort);
+        Task<ServiceResult<DetailHangHoaDto>> GetHangHoaByIdAsync(string id);
+        Task<ServiceResult<HangHoaDto>> UpdateHangHoaAsync(Guid id, HangHoaDto dto);
         Task<ServiceResult<bool>> DeleteHangHoaAsync(Guid id);
-        Task<ServiceResult<IEnumerable<CauHinhDto>>> GetCauHinhByHangHoaIdAsync(Guid hangHoaId);
-        Task<ServiceResult<List<CauHinh>>> CreateMultipleConfigsAsync(CreateMultipleConfigsDto dto);
-        Task<ServiceResult<IEnumerable<HangHoaDto>>> GetHangHoaCanhBaoAsync();
+        Task<ServiceResult<CauHinhDto>> GetCauHinhById(Guid Id);
+        Task<ServiceResult<List<CreateCauHinhDto>>> CreateMultipleConfigsAsync(Guid maHH, List<CreateCauHinhDto> dto);
+        Task<ServiceResult<List<HinhAnhDto>>> AddHinhAnhCauHing(Guid id, IFormFile[] files);
+        Task<ServiceResult<bool>> DeleteHinhAnhCauHinhAsync(Guid[] id);
+        Task<ServiceResult<DetailHangHoaDto>> FindByBarCode(IFormFile file);
+        Task<ServiceResult<string>> GenBarCode(string id);
     }
 }

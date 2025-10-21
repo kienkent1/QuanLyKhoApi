@@ -9,6 +9,7 @@ namespace QuanLyKhoApi.IServices
         Task<ServiceResult<NhanVienDto>> ThemNhanVienAsync(NhanVienDto nhanVien);
         Task<ServiceResult<PaginatedResult<List<NhanVien>>>> GetNhanVienAsync(string? query, int page, int pageSize, SortOBJ? sort);
         Task<ServiceResult<UpdateNhanVienDto>> UpdateNhanVienAsync(Guid id, UpdateNhanVienDto dto);
+        Task<ServiceResult<NhanVienDto>> GetNhanVienByIdAsync(Guid id);
         Task<ServiceResult<bool>> DeleteNhanVienAsync(Guid id);
         Task<ServiceResult<ProfileUserDto>> ProfileUser(string id);
         Task<ServiceResult<string>> ChangePassword(ChangePassworDto Pass, Guid id);

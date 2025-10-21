@@ -16,11 +16,14 @@ namespace QuanLyKhoApi.Controllers
     [ApiController]
     public class NhanVienController(INhanVienService service, AppDbContext db, AuthorizationService authorization) : ControllerBase
     {
-        private readonly INhanVienService service;
-        private readonly AppDbContext db;
-        private readonly AuthorizationService authorization;
-
-
+        private class ClaimUser
+        {
+            public const string XemNhanVien = "XemNhanVien";
+            public const string ThemNhanVien = "ThemNhanVien";
+            public const string SuaNhanVien = "SuaNhanVien";
+            public const string XoaNhanVien = "XoaNhanVien";
+            public static readonly string[] Nhanvienclaim = { XemNhanVien, ThemNhanVien, SuaNhanVien, XoaNhanVien };
+        }
 
         private class ValidateNhanVienDto
         {
@@ -60,22 +63,37 @@ namespace QuanLyKhoApi.Controllers
             [FromQuery] int pageSize = 12,
             [FromQuery] SortOBJ? sort = null)
         {
+            var idUser = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isHasClaim = await authorization.RoleHasListClaimAsync(idUser, ClaimUser.Nhanvienclaim);
+            if (isHasClaim.Success == false)
+            {
+                return MyStatusCodeBase.MyStatusCode(this, isHasClaim);
+            }
             var nhanVien = await service.GetNhanVienAsync(query, page, pageSize, sort);
             return MyStatusCodeBase.MyStatusCode(this, nhanVien);
 
         }
-        //[HttpGet("{id}")]
-        //public async Task<IActionResult> GetById(Guid id)
-        //{
-        //    var result = await service.GetNhanVienByIdAsync(id);
-        //    return MyStatusCodeBase.MyStatusCode(this, result);
-        //}
+
         [Authorize]
-        [HttpPost("ThemNhanVien")]
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(Guid id)
+        {
+            var idUser = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isHasClaim = await authorization.RoleHasListClaimAsync(idUser, ClaimUser.Nhanvienclaim);
+            if (isHasClaim.Success == false)
+            {
+                return MyStatusCodeBase.MyStatusCode(this, isHasClaim);
+            }
+            var result = await service.GetNhanVienByIdAsync(id);
+            return MyStatusCodeBase.MyStatusCode(this, result);
+        }
+
+        [Authorize]
+        [HttpPost]
         public async Task<IActionResult> ThemNhanVien([FromBody] NhanVienDto dto)
         {
             var iduser = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var isHasClaim = await authorization.RoleHasClaimAsync(iduser, "ThemNhanVien");
+            var isHasClaim = await authorization.RoleHasClaimAsync(iduser, ClaimUser.ThemNhanVien);
             if (isHasClaim.Success == false)
             {
                 return MyStatusCodeBase.MyStatusCode(this, isHasClaim);
@@ -90,13 +108,20 @@ namespace QuanLyKhoApi.Controllers
         }
 
         [Authorize]
-        [HttpPatch("UpdateNhanVien/{id}")]
+        [HttpPut("{id}")]
         public async Task<IActionResult> updateNhanVien([FromQuery] Guid id, [FromForm] UpdateNhanVienDto dto)
         {
+            var iduser = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isHasClaim = await authorization.RoleHasClaimAsync(iduser, ClaimUser.SuaNhanVien);
+            if (isHasClaim.Success == false)
+            {
+                return MyStatusCodeBase.MyStatusCode(this, isHasClaim);
+            }
             var result = await service.UpdateNhanVienAsync(id, dto);
             return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
+        [Authorize]
         [HttpPatch("{id}/avatar")]
         public async Task<IActionResult> UpdateAvatar(Guid id, IFormFile file)
         {
@@ -105,7 +130,7 @@ namespace QuanLyKhoApi.Controllers
         }
 
         [Authorize]
-        [HttpGet("me")]
+        [HttpGet("profile")]
         public async Task<IActionResult> ProfileUser()
         {
             var id = User.FindFirstValue(ClaimTypes.NameIdentifier).ToString();
@@ -113,6 +138,7 @@ namespace QuanLyKhoApi.Controllers
             return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
+        [Authorize]
         [HttpPost("{id}/password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePassworDto Pass, [FromRoute] Guid id)
         {
@@ -121,17 +147,30 @@ namespace QuanLyKhoApi.Controllers
         }
 
         [Authorize]
-        [HttpGet("permissions")]
+        [HttpGet("/claims")]
         public async Task<IActionResult> GetClaimUser()
         {
+            var iduser = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isHasClaim = await authorization.RoleHasListClaimAsync(iduser, ClaimUser.Nhanvienclaim);
+            if (isHasClaim.Success == false)
+            {
+                return MyStatusCodeBase.MyStatusCode(this, isHasClaim);
+            }
             var id = User.FindFirstValue(ClaimTypes.NameIdentifier).ToString();
             var result = await service.GetClaimUser(id);
             return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
+            var iduser = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isHasClaim = await authorization.RoleHasClaimAsync(iduser, ClaimUser.XoaNhanVien);
+            if (isHasClaim.Success == false)
+            {
+                return MyStatusCodeBase.MyStatusCode(this, isHasClaim);
+            }
             var result = await service.DeleteNhanVienAsync(id);
             return MyStatusCodeBase.MyStatusCode(this, result);
         }
