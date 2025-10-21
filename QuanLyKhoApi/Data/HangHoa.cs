@@ -25,6 +25,8 @@ namespace QuanLyKhoApi.Data
         [Required]
         public int SoLuongTon { get; set; }
 
+        public DateTime? CreatedAt { get; set; } = DateTime.UtcNow;
+
         public bool Deleted { get; set; } = false;
         public DateTime? DeletedAt { get; set; }
 
@@ -34,7 +36,7 @@ namespace QuanLyKhoApi.Data
         [ForeignKey(nameof(IdLoai))]
         public Loai loai { get; set; }
 
-        [JsonIgnore] 
+        [JsonIgnore]
         public ICollection<CauHinh> CauHinhs { get; set; } = new List<CauHinh>();
     }
 }

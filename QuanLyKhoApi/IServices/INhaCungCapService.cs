@@ -7,9 +7,9 @@ namespace QuanLyKhoApi.IServices
     public interface INhaCungCapService
     {
         Task<ServiceResult<NhaCungCap?>> CreateNhaCungCapAsync(NhaCungCapDto dto);
-        Task<ServiceResult<List<NhaCungCap>>> GetAllNhaCungCapAsync();
+        Task<ServiceResult<PaginatedResult<List<NhaCungCap>>>> GetAllNhaCungCapAsync(string? query, int page, int pageSize, SortOBJ? sort);
         Task<ServiceResult<NhaCungCap?>> GetNhaCungCapByIdAsync(int id);
-        Task<ServiceResult<bool>> UpdateNhaCungCapAsync(int id, NhaCungCapDto dto);
+        Task<ServiceResult<NhaCungCapUpdateDto>> UpdateNhaCungCapAsync(int id, NhaCungCapUpdateDto dto);
         Task<ServiceResult<bool>> DeleteNhaCungCapAsync(int id);
     }
 }

@@ -7,7 +7,7 @@ using QuanLyKhoApi.IServices;
 
 namespace QuanLyKhoApi.Services
 {
-    public class LoaiService(AppDbContext db, IMapper mapper) : ILoaiService
+    public class LoaiService(AppDbContext db, IMapper mapper, GitHubImageService git) : ILoaiService
     {
         public async Task<ServiceResult<LoaiDto>> ThemLoaiAsync(LoaiDto loai)
         {
@@ -20,6 +20,12 @@ namespace QuanLyKhoApi.Services
                 }
 
                 var newLoai = mapper.Map<Loai>(loai);
+                if (loai.HinhAnh is not null)
+                {
+
+                    var imagePath = await git.UpdateOneImg(loai.HinhAnh, "Loai");
+                    newLoai.HinhAnh = imagePath.Url;
+                }
                 await db.Loai.AddAsync(newLoai);
                 await db.SaveChangesAsync();
 
@@ -28,59 +34,69 @@ namespace QuanLyKhoApi.Services
             }
             catch (Exception ex)
             {
-                return ServiceResult<LoaiDto>.Fail("Lỗi hệ thống khi thêm loại", 500);
+                return ServiceResult<LoaiDto>.Fail($"Lỗi hệ thống: {ex.Message}", 500);
             }
         }
 
-        public async Task<ServiceResult<LoaiDto>> SuaLoai(int id, LoaiDto dto)
+        public async Task<ServiceResult<UpdateLoaiDto>> SuaLoai(int id, UpdateLoaiDto dto)
         {
             try
             {
                 var loai = await db.Loai.FirstOrDefaultAsync(l => l.Id == id);
                 if (loai == null)
                 {
-                    return ServiceResult<LoaiDto>.Fail("Không tìm thấy loại", 404);
+                    return ServiceResult<UpdateLoaiDto>.Fail("Không tìm thấy loại", 404);
                 }
 
                 var existingLoai = await db.Loai.FirstOrDefaultAsync(l => l.TenLoai == dto.TenLoai && l.Id != id);
                 if (existingLoai is not null)
                 {
-                    return ServiceResult<LoaiDto>.Fail("Tên loại đã tồn tại", 400);
+                    return ServiceResult<UpdateLoaiDto>.Fail("Tên loại đã tồn tại", 400);
                 }
-
+                if (dto.NewHinhAnh is not null)
+                {
+                    var imagePath = await git.UpdateOneImg(dto.NewHinhAnh, "Loai");
+                    dto.HinhAnh = imagePath.Url;
+                }
                 mapper.Map(dto, loai);
                 await db.SaveChangesAsync();
 
-                var result = mapper.Map<LoaiDto>(loai);
-                return ServiceResult<LoaiDto>.Ok(result, 200, "Cập nhật loại thành công");
+                var result = mapper.Map<UpdateLoaiDto>(loai);
+                return ServiceResult<UpdateLoaiDto>.Ok(result, 200, "Cập nhật loại thành công");
             }
             catch (Exception ex)
             {
-                return ServiceResult<LoaiDto>.Fail("Lỗi hệ thống khi cập nhật loại", 500);
+                return ServiceResult<UpdateLoaiDto>.Fail($"Lỗi hệ thống {ex.Message}", 500);
             }
         }
 
-        public async Task<ServiceResult<List<LoaiDto>>> GetLoai(string? query)
+        public async Task<ServiceResult<PaginatedResult<List<Loai>>>> GetLoai(string? query, int page, int pageSize, SortOBJ? sort)
         {
             try
             {
-                var loaiQuery = db.Loai.AsQueryable();
-                if (!string.IsNullOrWhiteSpace(query))
+                var loaiQuery = db.Loai
+                    .Select(l => new Loai
+                    {
+                        Id = l.Id,
+                        TenLoai = l.TenLoai,
+                        MoTa = l.MoTa,
+                        HinhAnh = l.HinhAnh,
+                        Deleted = l.Deleted,
+                        CreateAt = l.CreateAt,
+                    })
+                    .Where(l => l.Deleted != true).AsQueryable();
+                if (!string.IsNullOrEmpty(query) && loaiQuery is not null)
                 {
-                    var keyword = query.Trim();
-                    var isId = int.TryParse(keyword, out var idValue);
                     loaiQuery = loaiQuery.Where(l =>
-                        EF.Functions.Like(l.TenLoai, $"%{keyword}%") ||
-                        EF.Functions.Like(l.MoTa, $"%{keyword}%") ||
-                        (isId && l.Id == idValue)
-                    );
+                        l.TenLoai.Contains(query) ||
+                        l.Id.ToString().Contains(query));
                 }
-                var result = await loaiQuery.Select(l => mapper.Map<LoaiDto>(l)).ToListAsync();
-                return ServiceResult<List<LoaiDto>>.Ok(result, 200, "Lấy danh sách loại thành công");
+                var result = await Helper.Pagination<Loai>.PaginationAsync(loaiQuery, page, pageSize, sort);
+                return ServiceResult<PaginatedResult<List<Loai>>>.Ok(result, 200, "Lấy danh sách loại thành công");
             }
             catch (Exception ex)
             {
-                return ServiceResult<List<LoaiDto>>.Fail("Lỗi hệ thống khi lấy danh sách loại", 500);
+                return ServiceResult<PaginatedResult<List<Loai>>>.Fail("Lỗi hệ thống khi lấy danh sách loại", 500);
             }
         }
 

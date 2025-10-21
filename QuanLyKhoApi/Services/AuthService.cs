@@ -133,12 +133,12 @@ namespace QuanLyKhoApi.Services
         {
             return await context.NhanVien.AnyAsync(u => u.email == email);
         }
-        public async Task<ServiceResult<TaiKhoan>> RegisterAsync(RegisterDto req)
+        public async Task<ServiceResult<RegisterDto>> RegisterAsync(RegisterDto req)
         {
             try
             {
                 if (await ValidateAccount(req.IdNhanVien, req.TenDangNhap) == false)
-                    return ServiceResult<TaiKhoan>.Fail("Tên đăng nhập hoặc tài khoản đã tồn tại", 400);
+                    return ServiceResult<RegisterDto>.Fail("Tên đăng nhập hoặc tài khoản đã tồn tại", 400);
 
                 var hashedPass = new PasswordHasher<RegisterDto>()
                     .HashPassword(req, req.Password);
@@ -158,13 +158,14 @@ namespace QuanLyKhoApi.Services
                     IdTaiKhoan = req.IdNhanVien,
                     CreatedAt = DateTime.UtcNow
                 });
+
                 await context.SaveChangesAsync();
 
-                return ServiceResult<TaiKhoan>.Ok(account, 201);
+                return ServiceResult<RegisterDto>.Ok(req, 201);
             }
             catch (Exception ex)
             {
-                return ServiceResult<TaiKhoan>.Fail("Lỗi hệ thống", 500);
+                return ServiceResult<RegisterDto>.Fail("Lỗi hệ thống", 500);
             }
 
         }

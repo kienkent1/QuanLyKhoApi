@@ -1,16 +1,17 @@
 ﻿using IronBarCode;
-using Microsoft.AspNetCore.Mvc.Filters;
 using IronSoftware.Drawing;
+using Microsoft.AspNetCore.Mvc.Filters;
+using System.Text;
 
 namespace QuanLyKhoApi.Helper
 {
-    public  class Ironbarcode
+    public class Ironbarcode
     {
         private readonly string key;
 
         public Ironbarcode(IConfiguration con)
         {
-           IronBarCode.License.LicenseKey = con["IronbarcodeKey"];
+            IronBarCode.License.LicenseKey = con["IronbarcodeKey"];
             key = con["IronbarcodeKey"];
         }
 
@@ -26,6 +27,7 @@ namespace QuanLyKhoApi.Helper
                 ConfidenceThreshold = 0.6,
                 Multithreaded = true,
                 MaxParallelThreads = 4,
+
                 ImageFilters = new ImageFilterCollection()
             };
 
@@ -43,7 +45,11 @@ namespace QuanLyKhoApi.Helper
         }
         public async Task<string> GeneratedBarcode(string Id)
         {
-            var barcode =  BarcodeWriter.CreateBarcode(Id, BarcodeEncoding.Code128, 200, 100);
+            string safeId = Convert.ToBase64String(Encoding.UTF8.GetBytes(Id));
+
+            var barcode = BarcodeWriter.CreateBarcode(safeId, BarcodeEncoding.Code128, 400, 200);
+            barcode.SetMargins(10);
+
             var base64 = barcode.ToPngBinaryData();
             return Convert.ToBase64String(base64);
 

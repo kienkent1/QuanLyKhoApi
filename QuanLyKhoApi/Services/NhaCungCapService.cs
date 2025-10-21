@@ -4,28 +4,18 @@ using QuanLyKhoApi.Data;
 using QuanLyKhoApi.Dto;
 using QuanLyKhoApi.Helper;
 using QuanLyKhoApi.IServices;
+using System.Text.Json;
 
 namespace QuanLyKhoApi.Services
 {
-    public class NhaCungCapService(AppDbContext context, IMapper mapper) : INhaCungCapService
+    public class NhaCungCapService(AppDbContext context, IMapper mapper, GitHubImageService git) : INhaCungCapService
     {
         public async Task<ServiceResult<NhaCungCap?>> CreateNhaCungCapAsync(NhaCungCapDto dto)
         {
             try
             {
-                var nhaCungCap = new NhaCungCap
-                {
-                    TenNCC = dto.TenNCC,
-                    DienThoai = dto.DienThoai,
-                    Email = dto.Email,
-                    HinhAnh = dto.HinhAnh,
-                    DiaChi = !string.IsNullOrEmpty(dto.DiaChi) 
-                ? new Dictionary<string, object> { { "address", dto.DiaChi } }
-                : null,
-                    Deleted = false,
-                    CreateAt = DateTime.UtcNow
-                };
-
+                var nhaCungCap = mapper.Map<NhaCungCap>(dto);
+                nhaCungCap.CreateAt = DateTime.UtcNow;
                 context.NhaCungCap.Add(nhaCungCap);
                 await context.SaveChangesAsync();
 
@@ -37,20 +27,37 @@ namespace QuanLyKhoApi.Services
             }
         }
 
-        public async Task<ServiceResult<List<NhaCungCap>>> GetAllNhaCungCapAsync()
+        public async Task<ServiceResult<PaginatedResult<List<NhaCungCap>>>> GetAllNhaCungCapAsync(string? query, int page, int pageSize, SortOBJ? sort)
         {
             try
             {
-                var nhaCungCaps = await context.NhaCungCap
-                    .Where(n => n.Deleted == false)
-                    .OrderBy(n => n.TenNCC)
-                    .ToListAsync();
-
-                return ServiceResult<List<NhaCungCap>>.Ok(nhaCungCaps, 200, "Lấy danh sách nhà cung cấp thành công");
+                var nhaCungCaps = context.NhaCungCap
+                    .Select(n => new NhaCungCap
+                    {
+                        MaNCC = n.MaNCC,
+                        TenNCC = n.TenNCC,
+                        DiaChi = n.DiaChi,
+                        DienThoai = n.DienThoai,
+                        Email = n.Email,
+                        HinhAnh = n.HinhAnh,
+                        CreateAt = n.CreateAt,
+                        Deleted = n.Deleted,
+                    })
+                    .Where(n => n.Deleted != true)
+                    .AsQueryable();
+                if (nhaCungCaps is not null && !string.IsNullOrEmpty(query))
+                {
+                    nhaCungCaps = nhaCungCaps.Where(n =>
+                        n.TenNCC.Contains(query) ||
+                        n.DienThoai.Contains(query) ||
+                        n.Email.Contains(query));
+                }
+                var result = await Helper.Pagination<NhaCungCap>.PaginationAsync(nhaCungCaps, page, pageSize, sort);
+                return ServiceResult<PaginatedResult<List<NhaCungCap>>>.Ok(result);
             }
             catch (Exception ex)
             {
-                return ServiceResult<List<NhaCungCap>>.Fail("Lỗi hệ thống khi lấy danh sách nhà cung cấp", 500);
+                return ServiceResult<PaginatedResult<List<NhaCungCap>>>.Fail("Lỗi hệ thống khi lấy danh sách nhà cung cấp", 500);
             }
         }
 
@@ -59,6 +66,17 @@ namespace QuanLyKhoApi.Services
             try
             {
                 var nhaCungCap = await context.NhaCungCap
+                    .Select(n => new NhaCungCap
+                    {
+                        MaNCC = n.MaNCC,
+                        TenNCC = n.TenNCC,
+                        DiaChi = n.DiaChi,
+                        DienThoai = n.DienThoai,
+                        Email = n.Email,
+                        HinhAnh = n.HinhAnh,
+                        CreateAt = n.CreateAt,
+                        Deleted = n.Deleted,
+                    })
                     .FirstOrDefaultAsync(n => n.MaNCC == id && n.Deleted == false);
 
                 if (nhaCungCap == null)
@@ -66,7 +84,7 @@ namespace QuanLyKhoApi.Services
                     return ServiceResult<NhaCungCap?>.Fail("Không tìm thấy nhà cung cấp", 404);
                 }
 
-                return ServiceResult<NhaCungCap?>.Ok(nhaCungCap, 200, "Lấy thông tin nhà cung cấp thành công");
+                return ServiceResult<NhaCungCap?>.Ok(nhaCungCap);
             }
             catch (Exception ex)
             {
@@ -74,23 +92,29 @@ namespace QuanLyKhoApi.Services
             }
         }
 
-        public async Task<ServiceResult<bool>> UpdateNhaCungCapAsync(int id, NhaCungCapDto dto)
+        public async Task<ServiceResult<NhaCungCapUpdateDto>> UpdateNhaCungCapAsync(int id, NhaCungCapUpdateDto dto)
         {
             try
             {
                 var nhaCungCap = await context.NhaCungCap.FindAsync(id);
                 if (nhaCungCap is null)
-                    return ServiceResult<bool>.Fail("Không tìm thấy nhà cung cấp", 404);
+                    return ServiceResult<NhaCungCapUpdateDto>.Fail("Không tìm thấy nhà cung cấp", 404);
+                if (dto.NewAnh is not null)
+                {
+                    var res = await git.UpdateOneImg(dto.NewAnh, "NhaCungCap");
+                    dto.HinhAnh = res.Url;
+                }
 
                 mapper.Map(dto, nhaCungCap);
+
                 context.NhaCungCap.Update(nhaCungCap);
                 await context.SaveChangesAsync();
 
-                return ServiceResult<bool>.Ok(true, 200, "Cập nhật nhà cung cấp thành công");
+                return ServiceResult<NhaCungCapUpdateDto>.Ok(dto);
             }
             catch (Exception ex)
             {
-                return ServiceResult<bool>.Fail("Lỗi hệ thống khi cập nhật nhà cung cấp", 500);
+                return ServiceResult<NhaCungCapUpdateDto>.Fail("Lỗi hệ thống khi cập nhật nhà cung cấp", 500);
             }
         }
 
@@ -107,7 +131,7 @@ namespace QuanLyKhoApi.Services
                 context.NhaCungCap.Update(nhaCungCap);
                 await context.SaveChangesAsync();
 
-                return ServiceResult<bool>.Ok(true, 200, "Xóa nhà cung cấp thành công");
+                return ServiceResult<bool>.Ok(true);
             }
             catch (Exception ex)
             {
