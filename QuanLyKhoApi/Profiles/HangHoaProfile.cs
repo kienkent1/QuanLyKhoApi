@@ -10,6 +10,7 @@ namespace QuanLyKhoApi.Profiles
         {
             CreateMap<HangHoaDto, HangHoa>().ReverseMap();
             CreateMap<CauHinhDto, CauHinh>().ReverseMap();
+            CreateMap<CreateCauHinhDto, CauHinh>().ReverseMap();
             CreateMap<Loai, LoaiDto>();
             CreateMap<LoaiDto, Loai>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
