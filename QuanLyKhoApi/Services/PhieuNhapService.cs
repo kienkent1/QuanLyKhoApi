@@ -9,7 +9,7 @@ using static QuanLyKhoApi.Helper.BaseEnum;
 
 namespace QuanLyKhoApi.Services
 {
-    public class PhieuNhapService(AppDbContext db, IMapper mapper) : IPhieuNhap
+    public class PhieuNhapService(AppDbContext db, IMapper mapper, IThongKeServices thongKe) : IPhieuNhap
     {
         public async Task<ServiceResult<CreatePhieuNhapDto>> CreatePhieuNhapAsync(CreatePhieuNhapDto dto)
         {
@@ -215,28 +215,45 @@ namespace QuanLyKhoApi.Services
             {
                 var hangHoa = await db.HangHoa.FirstOrDefaultAsync(hh => hh.MaHH == phieuNhap.MaHH);
                 if (hangHoa == null)
+                {
+                    await transaction.RollbackAsync();
                     return ServiceResult<DetailPhieuNhapDto>.Fail("Không tìm thấy hàng hóa", 404);
+                }
 
+                // Lấy danh sách cấu hình liên quan trong 1 query
+                var cauHinhIds = phieuNhap.ChiTietNhaps.Select(ct => ct.MaCauHinh).ToList();
+                var cauHinhs = await db.CauHinh.Where(ch => cauHinhIds.Contains(ch.Id)).ToListAsync();
 
+                // Kiểm tra đầy đủ cấu hình
+                if (cauHinhs.Count != cauHinhIds.Count)
+                {
+                    await transaction.RollbackAsync();
+                    return ServiceResult<DetailPhieuNhapDto>.Fail("Một hoặc nhiều cấu hình không tồn tại", 404);
+                }
+
+                // Cộng tổng số lượng hàng hóa
                 hangHoa.SoLuongTon += (int)phieuNhap.SoLuong;
 
-                // Cộng từng chi tiết cấu hình
+                // Cộng từng cấu hình tồn kho
                 foreach (var ct in phieuNhap.ChiTietNhaps)
                 {
-                    var cauHinh = await db.CauHinh.FirstOrDefaultAsync(ch => ch.Id == ct.MaCauHinh);
-                    if (cauHinh == null)
-                        return ServiceResult<DetailPhieuNhapDto>.Fail($"Không tìm thấy cấu hình {ct.MaCauHinh}", 404);
-
+                    var cauHinh = cauHinhs.First(ch => ch.Id == ct.MaCauHinh);
                     cauHinh.SoLuongTon += ct.SoLuong;
                 }
 
-                // Đánh dấu trạng thái đã hoàn thành
                 phieuNhap.MaTrangThai = (int)TRANGTHAI.Done;
 
                 await db.SaveChangesAsync();
-                await transaction.CommitAsync();
 
+                // Gọi thống kê — không rollback nếu lỗi
                 var resultDto = mapper.Map<DetailPhieuNhapDto>(phieuNhap);
+                var thongKeOk = await thongKe.CreateOrUpdateThongKePhieuNhap(resultDto, TRANGTHAI.Done);
+                if (!thongKeOk)
+                {
+                    Console.WriteLine("[Cảnh báo] Cập nhật thống kê thất bại cho phiếu nhập #" + phieuNhap.MaPhieuNhap);
+                }
+
+                await transaction.CommitAsync();
                 return ServiceResult<DetailPhieuNhapDto>.Ok(resultDto);
             }
             catch (Exception ex)
@@ -245,6 +262,7 @@ namespace QuanLyKhoApi.Services
                 return ServiceResult<DetailPhieuNhapDto>.Fail($"Lỗi khi hoàn tất phiếu nhập: {ex.Message}", 500);
             }
         }
+
         private async Task<ServiceResult<DetailPhieuNhapDto>> ChangeStatusToCancel(PhieuNhap phieuNhap)
         {
             using var transaction = await db.Database.BeginTransactionAsync();
@@ -252,40 +270,57 @@ namespace QuanLyKhoApi.Services
             {
                 var hangHoa = await db.HangHoa.FirstOrDefaultAsync(hh => hh.MaHH == phieuNhap.MaHH);
                 if (hangHoa == null)
-                    return ServiceResult<DetailPhieuNhapDto>.Fail("Không tìm thấy hàng hóa", 404);
-
-                // Kiểm tra tổng số lượng tồn đủ để hủy không
-                if (hangHoa.SoLuongTon < phieuNhap.SoLuong)
-                    return ServiceResult<DetailPhieuNhapDto>.Fail("Kho không đủ hàng để hủy phiếu nhập", 400);
-
-                // Kiểm tra từng cấu hình
-                foreach (var ct in phieuNhap.ChiTietNhaps)
                 {
-                    var cauHinh = await db.CauHinh.FirstOrDefaultAsync(ch => ch.Id == ct.MaCauHinh);
-                    if (cauHinh == null)
-                        return ServiceResult<DetailPhieuNhapDto>.Fail($"Không tìm thấy cấu hình {ct.MaCauHinh}", 404);
-
-                    if (cauHinh.SoLuongTon < ct.SoLuong)
-                        return ServiceResult<DetailPhieuNhapDto>.Fail(
-                            $"Cấu hình {cauHinh.Id} không đủ số lượng để hủy (hiện có {cauHinh.SoLuongTon}, cần trừ {ct.SoLuong})", 400);
+                    await transaction.RollbackAsync();
+                    return ServiceResult<DetailPhieuNhapDto>.Fail("Không tìm thấy hàng hóa", 404);
                 }
 
-                // Nếu đủ, tiến hành trừ
-                hangHoa.SoLuongTon -= (int)phieuNhap.SoLuong;
+                var cauHinhIds = phieuNhap.ChiTietNhaps.Select(ct => ct.MaCauHinh).ToList();
+                var cauHinhs = await db.CauHinh.Where(ch => cauHinhIds.Contains(ch.Id)).ToListAsync();
+
+                if (cauHinhs.Count != cauHinhIds.Count)
+                {
+                    await transaction.RollbackAsync();
+                    return ServiceResult<DetailPhieuNhapDto>.Fail("Một hoặc nhiều cấu hình không tồn tại", 404);
+                }
+
+                // Kiểm tra đủ hàng để hủy
+                if (hangHoa.SoLuongTon < phieuNhap.SoLuong)
+                {
+                    await transaction.RollbackAsync();
+                    return ServiceResult<DetailPhieuNhapDto>.Fail("Kho không đủ hàng để hủy phiếu nhập", 400);
+                }
 
                 foreach (var ct in phieuNhap.ChiTietNhaps)
                 {
-                    var cauHinh = await db.CauHinh.FirstOrDefaultAsync(ch => ch.Id == ct.MaCauHinh);
+                    var cauHinh = cauHinhs.First(ch => ch.Id == ct.MaCauHinh);
+                    if (cauHinh.SoLuongTon < ct.SoLuong)
+                    {
+                        await transaction.RollbackAsync();
+                        return ServiceResult<DetailPhieuNhapDto>.Fail(
+                            $"Cấu hình {cauHinh.Id} không đủ số lượng để hủy (hiện có {cauHinh.SoLuongTon}, cần {ct.SoLuong})", 400);
+                    }
+                }
+
+                // Trừ tồn kho
+                hangHoa.SoLuongTon -= (int)phieuNhap.SoLuong;
+                foreach (var ct in phieuNhap.ChiTietNhaps)
+                {
+                    var cauHinh = cauHinhs.First(ch => ch.Id == ct.MaCauHinh);
                     cauHinh.SoLuongTon -= ct.SoLuong;
                 }
 
-                // Cập nhật trạng thái
                 phieuNhap.MaTrangThai = (int)TRANGTHAI.Cancel;
-
                 await db.SaveChangesAsync();
-                await transaction.CommitAsync();
 
                 var resultDto = mapper.Map<DetailPhieuNhapDto>(phieuNhap);
+                var thongKeOk = await thongKe.CreateOrUpdateThongKePhieuNhap(resultDto, TRANGTHAI.Cancel);
+                if (!thongKeOk)
+                {
+                    Console.WriteLine("[Cảnh báo] Cập nhật thống kê thất bại cho phiếu nhập #" + phieuNhap.MaPhieuNhap);
+                }
+
+                await transaction.CommitAsync();
                 return ServiceResult<DetailPhieuNhapDto>.Ok(resultDto);
             }
             catch (Exception ex)

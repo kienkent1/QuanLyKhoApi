@@ -11,11 +11,28 @@ namespace QuanLyKhoApi.Controllers
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
-    public class PhieuNhapController(IPhieuNhap service) : ControllerBase
+    public class PhieuNhapController(IPhieuNhap service, AuthorizationService auth) : ControllerBase
     {
-        [HttpGet]
-        public async Task<IActionResult> GetAllPhieuNhap([FromQuery] string? query, [FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] SortOBJ? sort = null)
+        private class ClaimPhieuNhap
         {
+            public const string XemPhieuNhap = "XemPhieuNhap";
+            public const string ThemPhieuNhap = "ThemPhieuNhap";
+            public static readonly string[] PhieuNhap = { XemPhieuNhap, ThemPhieuNhap };
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllPhieuNhap(
+            [FromQuery] string? query,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] SortOBJ? sort = null)
+        {
+            var idUser = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var isHasClaim = await auth.RoleHasListClaimAsync(idUser, ClaimPhieuNhap.PhieuNhap);
+            if (isHasClaim.Success == false)
+            {
+                return MyStatusCodeBase.MyStatusCode(this, isHasClaim);
+            }
             var result = await service.GetAllPhieuNhap(query, page, pageSize, sort);
             return this.MyStatusCode(result);
         }
@@ -23,8 +40,12 @@ namespace QuanLyKhoApi.Controllers
         [HttpPost]
         public async Task<IActionResult> CreatePhieuNhap([FromBody] CreatePhieuNhapDto dto)
         {
-            var idUser = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            dto.MaNV = Guid.Parse(idUser!);
+            var idUser = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var isHasClaim = await auth.RoleHasClaimAsync(idUser, ClaimPhieuNhap.ThemPhieuNhap);
+            if (isHasClaim.Success == false)
+            {
+                return MyStatusCodeBase.MyStatusCode(this, isHasClaim);
+            }
             var result = await service.CreatePhieuNhapAsync(dto);
             return this.MyStatusCode(result);
         }
@@ -32,6 +53,12 @@ namespace QuanLyKhoApi.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetPhieuNhapById(int id)
         {
+            var idUser = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var isHasClaim = await auth.RoleHasListClaimAsync(idUser, ClaimPhieuNhap.PhieuNhap);
+            if (isHasClaim.Success == false)
+            {
+                return MyStatusCodeBase.MyStatusCode(this, isHasClaim);
+            }
             var result = await service.GetPhieuNhapById(id);
             return this.MyStatusCode(result);
         }
@@ -39,6 +66,12 @@ namespace QuanLyKhoApi.Controllers
         [HttpPatch("{id}/status")]
         public async Task<IActionResult> ChangeStatus([FromRoute] int id, [FromBody] TRANGTHAI trangThai)
         {
+            var idUser = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var isHasClaim = await auth.RoleHasClaimAsync(idUser, ClaimPhieuNhap.ThemPhieuNhap);
+            if (isHasClaim.Success == false)
+            {
+                return MyStatusCodeBase.MyStatusCode(this, isHasClaim);
+            }
             var result = await service.ChangeStatus(id, trangThai);
             return this.MyStatusCode(result);
         }
