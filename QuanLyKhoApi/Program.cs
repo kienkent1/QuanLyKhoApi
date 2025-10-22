@@ -40,42 +40,44 @@ builder.Services.AddApplicationServices();
 
 builder.Services.Configure<GitHubOptions>(builder.Configuration.GetSection(GitHubOptions.GitHub));
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(option =>
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(option =>
+{
+    option.RequireHttpsMetadata = false;
+    option.SaveToken = true;
+    option.TokenValidationParameters = new TokenValidationParameters
     {
-        option.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidIssuer = builder.Configuration["AppSettings:Issuer"],
-            ValidateAudience = true,
-            ValidAudience = builder.Configuration["AppSettings:Audience"],
-            ValidateLifetime = true,
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(
-                    builder.Configuration["AppSettings:Token"]!)),
-            ValidateIssuerSigningKey = true,
-        };
+        ValidateIssuer = true,
+        ValidIssuer = builder.Configuration["AppSettings:Issuer"],
+        ValidateAudience = true,
+        ValidAudience = builder.Configuration["AppSettings:Audience"],
+        ValidateLifetime = true,
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(
+                builder.Configuration["AppSettings:Token"]!)),
+        ValidateIssuerSigningKey = true,
+    };
+})
+.AddCookie()
+.AddGoogle(option =>
+{
+    var clientId = builder.Configuration["Authentication:Google:ClientId"];
+    var clientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+    if (clientId is null) throw new ArgumentNullException("ClientId is null");
+    if (clientSecret is null) throw new ArgumentNullException("ClientSecret is null");
 
-
-    })
-    .AddCookie()
-    .AddGoogle(option =>
-    {
-        var clientId = builder.Configuration["Authentication:Google:ClientId"];
-        if (clientId is null) throw new ArgumentNullException("ClientId is null");
-        var clientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
-        if (clientSecret is null) throw new ArgumentNullException("ClientSecret is null");
-
-        option.ClientId = clientId;
-        option.ClientSecret = clientSecret;
-        option.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-        option.Scope.Add("profile");
-        option.Scope.Add("email");
-        option.Scope.Add("openid");
-
-        option.ClaimActions.MapJsonKey("picture", "picture");
-
-    });
+    option.ClientId = clientId;
+    option.ClientSecret = clientSecret;
+    option.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    option.Scope.Add("profile");
+    option.Scope.Add("email");
+    option.Scope.Add("openid");
+    option.ClaimActions.MapJsonKey("picture", "picture");
+});
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorPolicy", policy =>
@@ -87,7 +89,7 @@ builder.Services.AddCors(options =>
     });
 });
 var app = builder.Build();
-app.UseCors("CorPolicy");
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -103,7 +105,8 @@ app.Use(async (ctx, next) =>
 });
 
 app.UseHttpsRedirection();
-
+app.UseCors("CorPolicy");
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

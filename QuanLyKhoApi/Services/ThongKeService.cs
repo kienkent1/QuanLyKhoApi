@@ -133,5 +133,60 @@ namespace QuanLyKhoApi.Services
                 return false;
             }
         }
+
+        public async Task<ServiceResult<PaginatedResult<List<ComfirmEmailUser>>>> ListConfirm(string? query, int page, int pageSize, SortOBJ? sort)
+        {
+            try
+            {
+                var Account = db.ComfirmAccounts
+                                .Include(c => c.TaiKhoan)
+                                .ThenInclude(t => t.NhanVien.email)
+                                .AsQueryable();
+
+                var confirm = Account.Select(c => new ComfirmEmailUser
+                {
+                    IdTaiKhoan = c.IdTaiKhoan,
+                    Email = c.TaiKhoan.NhanVien.email,
+                    TenDangNhap = c.TaiKhoan.TenDangNhap,
+                    CreatedAt = c.CreatedAt
+                }).AsQueryable();
+                if (!string.IsNullOrEmpty(query) && query is not null)
+                {
+                    confirm = confirm.Where(c => c.Email.ToLower().Contains(query.ToLower()) ||
+                    c.TenDangNhap.Contains(query.ToLower()));
+                }
+
+                var result = await Pagination<ComfirmEmailUser>.PaginationAsync(confirm, page, pageSize, sort);
+                return ServiceResult<PaginatedResult<List<ComfirmEmailUser>>>.Ok(result);
+
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult<PaginatedResult<List<ComfirmEmailUser>>>.Fail($"Lỗi hệ thống: {ex.Message}", 500);
+            }
+
+        }
+
+        public async Task<ServiceResult<bool>> ComfirmAcc(Guid id)
+        {
+            try
+            {
+                var comfirm = await db.ComfirmAccounts.Include(c => c.TaiKhoan).ThenInclude(t => t.NhanVien).FirstOrDefaultAsync(c => c.IdTaiKhoan == id);
+                if (comfirm == null)
+                {
+                    return ServiceResult<bool>.Fail("Tài khoản không tồn tại hoặc đã được xác nhận", 404);
+                }
+                var user = comfirm.TaiKhoan.NhanVien;
+                user.trangthai = true;
+                db.ComfirmAccounts.Remove(comfirm);
+                db.NhanVien.Update(user);
+                await db.SaveChangesAsync();
+                return ServiceResult<bool>.Ok(true);
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult<bool>.Fail($"Lỗi hệ thống: {ex.Message}", 500);
+            }
+        }
     }
 }
