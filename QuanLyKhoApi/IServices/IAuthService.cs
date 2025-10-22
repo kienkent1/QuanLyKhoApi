@@ -6,7 +6,7 @@ namespace QuanLyKhoApi.IServices
 {
     public interface IAuthService
     {
-        Task<ServiceResult<RegisterDto>> RegisterAsync(RegisterDto req);
+        Task<ServiceResult<RegisterDto>> RegisterAsync(RegisterDto req, bool isFromAdmin = false);
         Task<ServiceResult<TokenResponseDto>?> LoginAsync(LoginDto req);
         Task<ServiceResult<RegisterGG>?> RegisterGoogle(RegisterGG dto, GoogleAuthDto ggDto);
         Task<GoogleResponse> GetGoogleResponse(GoogleAuthDto dto);
@@ -15,5 +15,6 @@ namespace QuanLyKhoApi.IServices
         Task<bool> ExitsUser(Guid id);
         Task<bool> ValidateAccount(Guid id, string userName);
         Task<bool> IsEmailExit(string email);
+        string CreateToken(TaiKhoan user);
     }
 }

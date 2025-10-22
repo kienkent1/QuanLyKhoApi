@@ -178,7 +178,7 @@ namespace QuanLyKhoApi.Services
             try
             {
                 var user = await db.TaiKhoan.FindAsync(dto.TaiKhoanId);
-                var role = await db.Role.FindAsync(dto.RoleId);
+                var role = await db.Role.FirstOrDefaultAsync(r => r.Id == dto.RoleId && r.Id != "admin");
                 if (user is null || role is null) return ServiceResult<RoleAccResponseDto>.Fail("Role hoặc tài khoản không tìm thấy", 404);
                 await db.TaiKhoanRoles.AddAsync(mapper.Map<TaiKhoanRole>(dto));
                 await db.SaveChangesAsync();

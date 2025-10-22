@@ -174,5 +174,19 @@ namespace QuanLyKhoApi.Controllers
             var result = await service.DeleteNhanVienAsync(id);
             return MyStatusCodeBase.MyStatusCode(this, result);
         }
+
+        [Authorize]
+        [HttpPatch("BlocUser/{id}")]
+        public async Task<IActionResult> BlocUser([FromRoute] Guid id)
+        {
+            var iduser = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isHasClaim = await authorization.RoleHasListClaimAsync(iduser, [ClaimUser.ThemNhanVien, ClaimUser.SuaNhanVien]);
+            if (isHasClaim.Success == false)
+            {
+                return MyStatusCodeBase.MyStatusCode(this, isHasClaim);
+            }
+            var result = await service.BlockUser(id);
+            return MyStatusCodeBase.MyStatusCode(this, result);
+        }
     }
 }

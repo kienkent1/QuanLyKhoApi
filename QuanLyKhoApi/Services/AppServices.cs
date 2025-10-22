@@ -19,6 +19,7 @@ namespace QuanLyKhoApi.Services
             services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IPhieuNhap, PhieuNhapService>();
             services.AddScoped<IPhieuXuat, PhieuXuatService>();
+            services.AddScoped<IAccountService, AccountService>();
             return services;
         }
     }

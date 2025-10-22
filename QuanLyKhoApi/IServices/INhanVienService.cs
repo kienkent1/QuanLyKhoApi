@@ -15,5 +15,6 @@ namespace QuanLyKhoApi.IServices
         Task<ServiceResult<string>> ChangePassword(ChangePassworDto Pass, Guid id);
         Task<ServiceResult<string>> UpdateAvatarNV(string id, IFormFile file);
         Task<ServiceResult<HashSet<string>>> GetClaimUser(string id);
+        Task<ServiceResult<bool>> BlockUser(Guid Id);
     }
 }

@@ -19,7 +19,7 @@ namespace QuanLyKhoApi.Services
     public class AuthService(AppDbContext context, IConfiguration configuration, IMapper mapper) : IAuthService
     {
         //tạo token
-        private string CreateToken(TaiKhoan user)
+        public string CreateToken(TaiKhoan user)
         {
             var claims = new List<Claim>
             {
@@ -133,7 +133,7 @@ namespace QuanLyKhoApi.Services
         {
             return await context.NhanVien.AnyAsync(u => u.email == email);
         }
-        public async Task<ServiceResult<RegisterDto>> RegisterAsync(RegisterDto req)
+        public async Task<ServiceResult<RegisterDto>> RegisterAsync(RegisterDto req, bool isFromAdmin = false)
         {
             try
             {
@@ -153,11 +153,25 @@ namespace QuanLyKhoApi.Services
                     RoleId = "user"
                 };
                 await context.TaiKhoanRoles.AddAsync(userRole);
-                await context.ComfirmAccounts.AddAsync(new ComfirmAccount
+
+                if (isFromAdmin == false)
                 {
-                    IdTaiKhoan = req.IdNhanVien,
-                    CreatedAt = DateTime.UtcNow
-                });
+                    await context.ComfirmAccounts.AddAsync(new ComfirmAccount
+                    {
+                        IdTaiKhoan = req.IdNhanVien,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+                else
+                {
+                    var userTT = await context.NhanVien.FindAsync(req.IdNhanVien);
+                    if (userTT.trangthai == false)
+                    {
+                        userTT.trangthai = true;
+                        context.NhanVien.Update(userTT);
+                    }
+                }
+
 
                 await context.SaveChangesAsync();
 

@@ -212,5 +212,35 @@ namespace QuanLyKhoApi.Services
                 return ServiceResult<HashSet<string>>.Fail($"Lỗi: {ex.Message}", 500);
             }
         }
+
+        public async Task<ServiceResult<bool>> BlockUser(Guid Id)
+        {
+            try
+            {
+                var confirmAcc = await db.ComfirmAccounts.FirstOrDefaultAsync(tk => tk.IdTaiKhoan == Id);
+                if (confirmAcc is not null)
+                    return ServiceResult<bool>.Fail("Tài khoản chưa được chấp nhận nên không thể block", 400);
+                var Account = await db.TaiKhoan
+                .Include(tk => tk.TaiKhoanRoles)
+                .ThenInclude(tr => tr.Role)
+                .Include(t => t.NhanVien)
+                .FirstOrDefaultAsync(tk => tk.IdNhanVien == Id && !tk.TaiKhoanRoles.Any(tr => tr.Role.Id == "Admin"));
+
+                if (Account is null)
+                    return ServiceResult<bool>.Fail("Tài khoản không tồn tại", 404);
+                if (Account.NhanVien.trangthai == false)
+                    return ServiceResult<bool>.Fail("Tài khoản đã bị khóa trước đó", 400);
+                var user = Account.NhanVien;
+                user.trangthai = false;
+                db.NhanVien.Update(user);
+                await db.SaveChangesAsync();
+                return ServiceResult<bool>.Ok(true, 200, "Khóa tài khoản thành công");
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult<bool>.Fail($"Lỗi: {ex.Message}", 500);
+
+            }
+        }
     }
 }
