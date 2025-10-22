@@ -23,5 +23,11 @@ namespace QuanLyKhoApi.Helper
             [EnumMember(Value = "Hủy")]
             Cancel = 3
         }
+
+        public enum PHIEU
+        {
+            Nhap,
+            Xuat
+        }
     }
 }

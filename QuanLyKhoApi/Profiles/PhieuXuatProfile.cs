@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using QuanLyKhoApi.Data;
+using QuanLyKhoApi.Dto;
 
 namespace QuanLyKhoApi.Profiles
 {
@@ -6,7 +8,10 @@ namespace QuanLyKhoApi.Profiles
     {
         public PhieuXuatProfile()
         {
-
+            CreateMap<CreatePhieuXuatDto, PhieuXuat>();
+            CreateMap<ChiTietXuatDto, ChiTietXuat>();
+            CreateMap<PhieuXuat, DetailPhieuXuatDto>();
+            CreateMap<ChiTietXuat, DetailCTPhieuXuatDto>();
         }
     }
 }
