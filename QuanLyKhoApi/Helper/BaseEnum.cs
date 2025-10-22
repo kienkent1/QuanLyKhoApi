@@ -13,5 +13,15 @@ namespace QuanLyKhoApi.Helper
             Nu
         }
 
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public enum TRANGTHAI
+        {
+            [EnumMember(Value = "Chờ xử lý")]
+            Pending = 1,
+            [EnumMember(Value = "Hoàn thành")]
+            Done = 2,
+            [EnumMember(Value = "Hủy")]
+            Cancel = 3
+        }
     }
 }

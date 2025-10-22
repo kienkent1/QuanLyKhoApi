@@ -19,6 +19,7 @@ namespace QuanLyKhoApi.Data
         [Required]
         public int MaTrangThai { get; set; }
         public string? GhiChu { get; set; }
+        public int? SoLuong { get; set; }
 
         [ForeignKey(nameof(MaTrangThai))]
         public TrangThaiPhieu TrangThaiPhieu { get; set; }

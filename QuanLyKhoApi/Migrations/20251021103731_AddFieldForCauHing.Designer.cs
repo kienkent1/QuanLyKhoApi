@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using QuanLyKhoApi.Data;
@@ -12,9 +13,11 @@ using QuanLyKhoApi.Data;
 namespace QuanLyKhoApi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251021103731_AddFieldForCauHing")]
+    partial class AddFieldForCauHing
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -105,11 +108,11 @@ namespace QuanLyKhoApi.Migrations
 
             modelBuilder.Entity("QuanLyKhoApi.Data.ChiTietXuat", b =>
                 {
-                    b.Property<int>("MaChiTietXuat")
+                    b.Property<int>("MaPhieuXuat")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("MaChiTietXuat"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("MaPhieuXuat"));
 
                     b.Property<decimal>("DonGia")
                         .HasColumnType("numeric");
@@ -117,17 +120,17 @@ namespace QuanLyKhoApi.Migrations
                     b.Property<Guid>("MaCauHinh")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("MaPhieuXuat")
+                    b.Property<int>("MaChiTietXuat")
                         .HasColumnType("integer");
 
                     b.Property<int?>("SoLuong")
                         .HasColumnType("integer");
 
-                    b.HasKey("MaChiTietXuat");
+                    b.HasKey("MaPhieuXuat");
 
                     b.HasIndex("MaCauHinh");
 
-                    b.HasIndex("MaPhieuXuat");
+                    b.HasIndex("MaChiTietXuat");
 
                     b.ToTable("ChiTietXuat");
                 });
@@ -864,7 +867,7 @@ namespace QuanLyKhoApi.Migrations
 
                     b.HasOne("QuanLyKhoApi.Data.PhieuXuat", "PhieuXuat")
                         .WithMany("ChiTietXuats")
-                        .HasForeignKey("MaPhieuXuat")
+                        .HasForeignKey("MaChiTietXuat")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

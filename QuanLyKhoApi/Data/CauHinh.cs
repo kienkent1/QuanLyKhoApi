@@ -33,6 +33,7 @@ namespace QuanLyKhoApi.Data
 
         public string? Rom { get; set; }
 
+        public string? TenPhienBan { get; set; }
         public int? SoLuongHidden { get; set; } = 0;
 
         [JsonIgnore]

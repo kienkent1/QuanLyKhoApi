@@ -177,8 +177,8 @@ namespace QuanLyKhoApi.Services
         {
             string result = model;
             if (mau is not null && !string.IsNullOrEmpty(mau)) result += ", Màu: " + mau;
-            if (ram is not null && !string.IsNullOrEmpty(ram)) result += ", Ram: " + ram + "GB";
-            if (rom is not null && !string.IsNullOrEmpty(rom)) result += ", Rom: " + rom + "GB";
+            if (ram is not null && !string.IsNullOrEmpty(ram)) result += ", Ram: " + ram;
+            if (rom is not null && !string.IsNullOrEmpty(rom)) result += ", Rom: " + rom;
             return result += ".";
         }
 
@@ -284,35 +284,22 @@ namespace QuanLyKhoApi.Services
                 if (hangHoa is null)
                     return ServiceResult<List<CreateCauHinhDto>>.Fail("Không tìm thấy hàng hóa", 404);
 
-                var configs = new List<CreateCauHinhDto>();
 
                 using var transaction = await _context.Database.BeginTransactionAsync();
-
-                foreach (var configDto in dto)
+                foreach (var config in dto)
                 {
-                    var config = mapper.Map<CauHinh>(configDto);
-                    if (configDto.HinhAnh is not null && configDto.HinhAnh.Count > 0)
-                    {
-                        var imgUrl = await git.UpdateimgList(configDto.HinhAnh.ToArray(), "CauHinh");
-                        foreach (var img in imgUrl)
-                        {
-                            var hinhAnh = new HinhAnhHH
-                            {
-                                Url = img.Url,
-                                CreateAt = DateTime.UtcNow,
-                            };
-                            config.HinhAnhs.Add(hinhAnh);
-                            _context.HinhAnhHH.Add(hinhAnh);
-                        }
-                    }
-                    _context.CauHinh.Add(config);
-                    configs.Add(configDto);
+                    config.MaHH = maHH;
                 }
 
+                var newConfigs = mapper.Map<List<CauHinh>>(dto);
+
+                await _context.CauHinh.AddRangeAsync(newConfigs);
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                return ServiceResult<List<CreateCauHinhDto>>.Ok(configs);
+
+                var resultDtos = mapper.Map<List<CreateCauHinhDto>>(newConfigs);
+                return ServiceResult<List<CreateCauHinhDto>>.Ok(resultDtos);
             }
             catch (Exception ex)
             {
