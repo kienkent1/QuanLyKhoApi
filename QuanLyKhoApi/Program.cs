@@ -76,6 +76,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         option.ClaimActions.MapJsonKey("picture", "picture");
 
     });
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("CorPolicy", policy =>
+    {
+        policy
+            .AllowAnyOrigin()     // hoặc .WithOrigins("http://localhost:5173") nếu muốn giới hạn
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+    });
+});
 var app = builder.Build();
 app.UseCors("CorPolicy");
 
