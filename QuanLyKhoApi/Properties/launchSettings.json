@@ -9,7 +9,7 @@
       "applicationUrl": "http://localhost:5000",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-
+        "GITHUB_TOKEN": "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"
       }
     },
     "https": {
@@ -20,7 +20,7 @@
       "applicationUrl": "https://localhost:4000;http://localhost:5000",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-
+        "GITHUB_TOKEN": "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"
       }
     }
   }
