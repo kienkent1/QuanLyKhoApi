@@ -124,7 +124,8 @@ namespace QuanLyKhoApi.Services
         public async Task<ServiceResult<UpdateNhanVienDto>> UpdateNhanVienAsync(Guid id, UpdateNhanVienDto dto)
         {
             if (dto is null) return ServiceResult<UpdateNhanVienDto>.Fail("Không có dữ liệu để cập nhật", 400);
-            var nv = await db.NhanVien.FirstOrDefaultAsync(nv => nv.IdNhanVien == id);
+            var nv = await db.NhanVien.Include(n => n.TaiKhoan).ThenInclude(t => t.TaiKhoanRoles)
+                .FirstOrDefaultAsync(nv => nv.IdNhanVien == id && nv.TaiKhoan.TaiKhoanRoles.Any(r => r.RoleId != "admin"));
             if (nv is null) return ServiceResult<UpdateNhanVienDto>.Fail("Không tìm thấy nhân viên", 404);
 
             if (!string.IsNullOrEmpty(dto.TenNhanVien))
@@ -219,14 +220,16 @@ namespace QuanLyKhoApi.Services
         {
             try
             {
-                var confirmAcc = await db.ComfirmAccounts.FirstOrDefaultAsync(tk => tk.IdTaiKhoan == Id);
+                var confirmAcc = await db.ComfirmAccounts.Include(c => c.TaiKhoan)
+                    .ThenInclude(t => t.TaiKhoanRoles)
+                    .FirstOrDefaultAsync(tk => tk.IdTaiKhoan == Id && tk.TaiKhoan.TaiKhoanRoles.Any(t => t.RoleId != "admin"));
                 if (confirmAcc is not null)
                     return ServiceResult<bool>.Fail("Tài khoản chưa được chấp nhận nên không thể block", 400);
                 var Account = await db.TaiKhoan
                 .Include(tk => tk.TaiKhoanRoles)
                 .ThenInclude(tr => tr.Role)
                 .Include(t => t.NhanVien)
-                .FirstOrDefaultAsync(tk => tk.IdNhanVien == Id && !tk.TaiKhoanRoles.Any(tr => tr.Role.Id == "Admin"));
+                .FirstOrDefaultAsync(tk => tk.IdNhanVien == Id && tk.TaiKhoanRoles.Any(tr => tr.Role.Id != "admin"));
 
                 if (Account is null)
                     return ServiceResult<bool>.Fail("Tài khoản không tồn tại", 404);
