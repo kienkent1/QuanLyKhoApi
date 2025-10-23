@@ -122,8 +122,12 @@ namespace QuanLyKhoApi.Services
         {
             if (await context.TaiKhoan.AnyAsync(u => u.IdNhanVien == id))
                 return false;
-            if (await context.TaiKhoan.AnyAsync(u => u.TenDangNhap == userName))
-                return false;
+            if (userName is not null && !string.IsNullOrEmpty(userName))
+            {
+                if (await context.TaiKhoan.AnyAsync(u => u.TenDangNhap == userName))
+                    return false;
+            }
+
             if (await ExitsUser(id))
                 return true;
             return true;
@@ -261,27 +265,41 @@ namespace QuanLyKhoApi.Services
         }
         public async Task<ServiceResult<RegisterGG>?> RegisterGoogle(RegisterGG req, GoogleAuthDto gg)
         {
+            await using var transaction = await context.Database.BeginTransactionAsync();
             try
             {
                 var res = await GetGoogleResponse(gg);
                 if (res is null) return ServiceResult<RegisterGG>.Fail("Token không hợp lệ", 400);
                 var exitsUser = await ExitsUser(req.IdNhanVien);
                 if (exitsUser is false) return ServiceResult<RegisterGG>.Fail("Nhân viên không tồn tại", 404);
+                var userGG = await context.NhanVien.Include(n => n.TaiKhoan).FirstOrDefaultAsync(n => n.IdNhanVien == req.IdNhanVien);
+                if (userGG.TaiKhoan.GoogleId is not null) return ServiceResult<RegisterGG>.Fail("Tài khoản google này đã tồn tại", 400);
+                if (string.IsNullOrEmpty(req.TenDangNhap) && userGG.TaiKhoan.TenDangNhap is null) req.TenDangNhap = res.Email;
+                if (req.TenDangNhap is not null && userGG.TaiKhoan.TenDangNhap == req.TenDangNhap.Trim()) return ServiceResult<RegisterGG>.Fail("Tên đăng nhập đã tồn tại", 400);
 
-                var validateAccount = await ValidateAccount(req.IdNhanVien, req.TenDangNhap);
-                if (validateAccount is false) return ServiceResult<RegisterGG>.Fail("Tên đăng nhập đã tồn tại", 400);
-                if (String.IsNullOrEmpty(req.TenDangNhap)) req.TenDangNhap = res.Email;
-
-                req.CreatedAt = DateTime.UtcNow;
-                var account = mapper.Map<TaiKhoan>(req);
-                account.GoogleId = res.GoogleSub;
-                context.TaiKhoan.Add(account);
-                var userRole = new TaiKhoanRole
+                var updateAcc = await context.TaiKhoan.FindAsync(userGG.TaiKhoan.IdNhanVien);
+                if (updateAcc is not null)
                 {
-                    TaiKhoanId = req.IdNhanVien,
-                    RoleId = "user"
-                };
-                context.TaiKhoanRoles.Add(userRole);
+                    updateAcc.GoogleId = res.GoogleSub;
+
+
+                    context.TaiKhoan.Update(updateAcc);
+
+                }
+                else
+                {
+                    req.CreatedAt = DateTime.UtcNow;
+                    var account = mapper.Map<TaiKhoan>(req);
+                    account.GoogleId = res.GoogleSub;
+                    context.TaiKhoan.Add(account);
+                    var userRole = new TaiKhoanRole
+                    {
+                        TaiKhoanId = req.IdNhanVien,
+                        RoleId = "user"
+                    };
+                    context.TaiKhoanRoles.Add(userRole);
+                }
+
 
                 var user = await context.NhanVien.Include(u => u.TaiKhoan)
                     .FirstOrDefaultAsync(nv => nv.IdNhanVien == req.IdNhanVien && nv.UrlHinh == null);
@@ -296,10 +314,12 @@ namespace QuanLyKhoApi.Services
                     CreatedAt = DateTime.UtcNow
                 });
                 await context.SaveChangesAsync();
+                await transaction.CommitAsync();
                 return ServiceResult<RegisterGG>.Ok(req);
             }
             catch (Exception ex)
             {
+                await transaction.RollbackAsync();
                 return ServiceResult<RegisterGG>.Fail($"Lỗi: {ex.Message}", 500);
             }
         }
