@@ -90,6 +90,7 @@ namespace QuanLyKhoApi.Services
                 diaChi = profile.diaChi,
                 UrlHinh = profile.UrlHinh,
                 ngaySinh = profile.ngaySinh,
+                ChucVu = profile.chucVu,
                 gioiTinh = Enum.TryParse<BaseEnum.GIOITINH>(profile.gioiTinh, out var parsedGioiTinh) ? parsedGioiTinh : BaseEnum.GIOITINH.Nam,
                 UpdateAt = profile.UpdateAt
             };

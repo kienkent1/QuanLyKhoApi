@@ -25,6 +25,7 @@ namespace QuanLyKhoApi.Dto
 
         [Required(ErrorMessage = "Ngày sinh là bắt buộc")]
         public DateTime ngaySinh { get; set; }
+        public string? ChucVu { get; set; }
 
         [Required(ErrorMessage = "Giới tính là bắt buộc")]
         public GIOITINH gioiTinh { get; set; }
