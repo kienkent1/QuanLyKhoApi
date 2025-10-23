@@ -26,10 +26,20 @@ namespace QuanLyKhoApi.Services
                     var imagePath = await git.UpdateOneImg(loai.HinhAnh, "Loai");
                     newLoai.HinhAnh = imagePath.Url;
                 }
+
                 await db.Loai.AddAsync(newLoai);
                 await db.SaveChangesAsync();
 
-                var result = mapper.Map<LoaiDto>(newLoai);
+                var result = new LoaiDto()
+                {
+                    CreateAt = newLoai.CreateAt,
+                    Id = newLoai.Id,
+                    HinhAnhReturn = newLoai.HinhAnh,
+                    TenLoai = newLoai.TenLoai,
+                    MoTa = newLoai.MoTa,
+
+
+                };
                 return ServiceResult<LoaiDto>.Ok(result, 201, "Thêm loại thành công");
             }
             catch (Exception ex)
