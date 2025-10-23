@@ -10,6 +10,7 @@ namespace QuanLyKhoApi.Dto
         public int Id { get; set; }
         public DateTime NgayXuat { get; set; }
         public int MaTrangThai { get; set; }
+        public string? TenHang { get; set; }
         public string? TenTrangThai { get; set; }
         public decimal? GiaXuat { get; set; }
         public string? GhiChu { get; set; }

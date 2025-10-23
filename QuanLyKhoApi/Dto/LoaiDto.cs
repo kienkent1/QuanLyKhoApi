@@ -4,7 +4,7 @@ namespace QuanLyKhoApi.Dto
 {
     public class LoaiDto
     {
-        public int Id { get; set; }
+        public int? Id { get; set; }
         [Required(ErrorMessage = "Tên loại không được để trống")]
         [MaxLength(100, ErrorMessage = "Tên loại không được vượt quá 100 ký tự")]
         public string TenLoai { get; set; }

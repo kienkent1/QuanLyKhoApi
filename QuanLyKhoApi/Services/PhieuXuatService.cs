@@ -104,11 +104,13 @@ namespace QuanLyKhoApi.Services
                     {
                         Id = px.MaPhieuXuat,
                         NgayXuat = px.NgayXuat,
+                        TenHang = px.HangHoa.Model,
                         MaTrangThai = px.MaTrangThai,
                         TenTrangThai = px.TrangThaiPhieu.TenTrangThai,
                         NhanVienTen = px.NhanVien.TenNhanVien,
                         GhiChu = px.GhiChu,
                         GiaXuat = px.GiaXuat,
+
                     })
                     .AsQueryable();
 

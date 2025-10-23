@@ -109,6 +109,7 @@ namespace QuanLyKhoApi.Services
                     {
                         Id = p.MaPhieuNhap,
                         NgayNhap = p.NgayNhap,
+                        TenHang = p.HangHoa.Model,
                         MaTrangThai = p.MaTrangThai,
                         TenTrangThai = p.TrangThaiPhieu.TenTrangThai,
                         NhanVienTen = p.NhanVien.TenNhanVien,
