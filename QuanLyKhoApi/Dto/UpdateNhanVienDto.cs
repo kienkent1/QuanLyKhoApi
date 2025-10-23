@@ -9,7 +9,7 @@ namespace QuanLyKhoApi.Dto
         [MaxLength(200, ErrorMessage = "Tên nhân viên không được vượt quá 200 ký tự")]
         public string? TenNhanVien { get; set; }
 
- 
+
         [EmailAddress(ErrorMessage = "Email không đúng định dạng")]
         public string? email { get; set; }
 
@@ -28,6 +28,6 @@ namespace QuanLyKhoApi.Dto
 
         public string? chucVu { get; set; }
 
-        public bool trangthai { get; set; } = true;
+        public bool? trangthai { get; set; }
     }
 }

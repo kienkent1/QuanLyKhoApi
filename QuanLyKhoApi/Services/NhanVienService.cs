@@ -144,8 +144,9 @@ namespace QuanLyKhoApi.Services
 
             if (!string.IsNullOrEmpty(dto.chucVu))
                 nv.chucVu = dto.chucVu;
+            if (dto.trangthai is not null)
+                nv.trangthai = (bool)dto.trangthai;
 
-            nv.trangthai = dto.trangthai;
             nv.UpdateAt = DateTime.UtcNow;
             db.NhanVien.Update(nv);
             db.SaveChanges();
