@@ -10,7 +10,8 @@ namespace QuanLyKhoApi.Dto
         public string TenLoai { get; set; }
         public string? MoTa { get; set; }
         public IFormFile? HinhAnh { get; set; }
-        public DateTime? CreateAt { get; set; } = DateTime.Now;
+        public string? HinhAnhReturn { get; set; }
+        public DateTime? CreateAt { get; set; } = DateTime.UtcNow;
     }
 
     public class UpdateLoaiDto
