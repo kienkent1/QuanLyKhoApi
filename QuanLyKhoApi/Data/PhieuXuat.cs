@@ -11,12 +11,13 @@ namespace QuanLyKhoApi.Data
         [Required]
         public DateTime NgayXuat { get; set; } = DateTime.UtcNow;
         [Required]
-        public Guid MaNV{ get; set; } 
+        public Guid MaNV { get; set; }
 
         [Required]
-        public int MaTrangThai { get; set; } 
+        public int MaTrangThai { get; set; }
         public string? GhiChu { get; set; }
         public decimal? GiaXuat { get; set; }
+        public int? SoLuong { get; set; }
         [Required]
         public Guid MaHH { get; set; }
         [ForeignKey(nameof(MaHH))]

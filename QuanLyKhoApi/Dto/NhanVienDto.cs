@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using static QuanLyKhoApi.Helper.BaseEnum;
 
 namespace QuanLyKhoApi.Dto
 {
@@ -18,14 +19,14 @@ namespace QuanLyKhoApi.Dto
 
         public string sdt { get; set; }
 
-        public string? diaChi { get; set; }
+        public Dictionary<string, object>? diaChi { get; set; }
         public IFormFile? Hinh { get; set; }
 
         [Required(ErrorMessage = "Ngày sinh là bắt buộc")]
         public DateTime ngaySinh { get; set; }
 
         [Required(ErrorMessage = "Giới tính là bắt buộc")]
-        public string gioiTinh { get; set; }
+        public GIOITINH GioiTinh { get; set; }
 
         [Required(ErrorMessage = "Chức vụ là bắt buộc")]
         public string chucVu { get; set; }

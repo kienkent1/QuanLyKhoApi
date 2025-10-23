@@ -9,6 +9,6 @@ namespace QuanLyKhoApi.Data
         public int MaTrangThai { get; set; }
         [Required, MaxLength(200)]
         public string TenTrangThai { get; set; }
-        public string MoTa { get; set; }
+        public string? MoTa { get; set; }
     }
 }

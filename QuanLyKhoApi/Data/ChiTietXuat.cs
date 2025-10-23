@@ -6,12 +6,20 @@ namespace QuanLyKhoApi.Data
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int MaPhieuXuat { get; set; }
+        public int MaChiTietXuat { get; set; }
+
 
         [Required]
         public Guid MaCauHinh { get; set; }
+
+        public int? SoLuong { get; set; }
+
         [Required]
-        public int SoLuong { get; set; }
+        public int MaPhieuXuat { get; set; }
+
+
+        [ForeignKey(nameof(MaPhieuXuat))]
+        public PhieuXuat PhieuXuat { get; set; }
 
         [Required]
         public decimal DonGia { get; set; }

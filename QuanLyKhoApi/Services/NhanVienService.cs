@@ -3,10 +3,12 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
+using Polly;
 using QuanLyKhoApi.Data;
 using QuanLyKhoApi.Dto;
-using QuanLyKhoApi.IServices;
 using QuanLyKhoApi.Helper;
+using QuanLyKhoApi.IServices;
+using System.Linq;
 
 namespace QuanLyKhoApi.Services
 {
@@ -14,10 +16,63 @@ namespace QuanLyKhoApi.Services
     {
 
 
-        public async Task<IQueryable<NhanVien>> GetNhanVienAsync()
+        public async Task<ServiceResult<PaginatedResult<List<NhanVien>>>> GetNhanVienAsync(string? query, int page, int pageSize, SortOBJ? sort)
         {
-            var nhanVien = db.NhanVien.AsQueryable();
-            return nhanVien;
+            try
+            {
+                var nhanVien = db.NhanVien.AsQueryable();
+                if (query is not null)
+                {
+                    nhanVien = nhanVien.Where(nv =>
+                    nv.TenNhanVien.Contains(query) ||
+                    nv.IdNhanVien.ToString().Contains(query) ||
+                    nv.email.Contains(query) ||
+                    nv.chucVu.Contains(query));
+                }
+                var result = await Helper.Pagination<NhanVien>.PaginationAsync(nhanVien, page, pageSize, sort);
+                int tongNV = await nhanVien.CountAsync();
+                return ServiceResult<PaginatedResult<List<NhanVien>>>.Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult<PaginatedResult<List<NhanVien>>>.Fail($"Lỗi: {ex.Message}", 500);
+            }
+        }
+
+        public async Task<ServiceResult<NhanVienDto>> GetNhanVienByIdAsync(Guid id)
+        {
+            try
+            {
+                var nhanVien = await db.NhanVien.FirstOrDefaultAsync(nv => nv.IdNhanVien == id);
+                if (nhanVien is null)
+                    return ServiceResult<NhanVienDto>.Fail("Không tìm thấy nhân viên", 404);
+
+                var result = mapper.Map<NhanVienDto>(nhanVien);
+                return ServiceResult<NhanVienDto>.Ok(result, 200, "Lấy thông tin nhân viên thành công");
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult<NhanVienDto>.Fail($"Lỗi: {ex.Message}", 500);
+            }
+        }
+
+        public async Task<ServiceResult<bool>> DeleteNhanVienAsync(Guid id)
+        {
+            try
+            {
+                var nhanVien = await db.NhanVien.FirstOrDefaultAsync(nv => nv.IdNhanVien == id);
+                if (nhanVien is null)
+                    return ServiceResult<bool>.Fail("Không tìm thấy nhân viên", 404);
+
+                db.NhanVien.Remove(nhanVien);
+                await db.SaveChangesAsync();
+
+                return ServiceResult<bool>.Ok(true, 200, "Xóa nhân viên thành công");
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult<bool>.Fail($"Lỗi: {ex.Message}", 500);
+            }
         }
 
         public async Task<ServiceResult<ProfileUserDto>> ProfileUser(string id)
@@ -35,11 +90,11 @@ namespace QuanLyKhoApi.Services
                 diaChi = profile.diaChi,
                 UrlHinh = profile.UrlHinh,
                 ngaySinh = profile.ngaySinh,
-                gioiTinh = profile.gioiTinh,
+                ChucVu = profile.chucVu,
+                gioiTinh = Enum.TryParse<BaseEnum.GIOITINH>(profile.gioiTinh, out var parsedGioiTinh) ? parsedGioiTinh : BaseEnum.GIOITINH.Nam,
                 UpdateAt = profile.UpdateAt
             };
             return ServiceResult<ProfileUserDto>.Ok(result);
-
         }
 
         public async Task<ServiceResult<NhanVienDto>> ThemNhanVienAsync(NhanVienDto nhanVien)
@@ -81,19 +136,18 @@ namespace QuanLyKhoApi.Services
             if (!string.IsNullOrEmpty(dto.sdt))
                 nv.sdt = dto.sdt;
 
-            if (!string.IsNullOrEmpty(dto.diaChi))
+            if (dto.diaChi is not null)
                 nv.diaChi = dto.diaChi;
 
             if (dto.ngaySinh != default)
                 nv.ngaySinh = DateTime.SpecifyKind((DateTime)dto.ngaySinh, DateTimeKind.Utc);
 
-            if (!string.IsNullOrEmpty(dto.gioiTinh))
-                nv.gioiTinh = dto.gioiTinh;
-
             if (!string.IsNullOrEmpty(dto.chucVu))
                 nv.chucVu = dto.chucVu;
+            if (dto.trangthai is not null)
+                nv.trangthai = (bool)dto.trangthai;
 
-            nv.trangthai = dto.trangthai;
+            nv.UpdateAt = DateTime.UtcNow;
             db.NhanVien.Update(nv);
             db.SaveChanges();
             return ServiceResult<UpdateNhanVienDto>.Ok(dto);
@@ -127,6 +181,7 @@ namespace QuanLyKhoApi.Services
                 var urlHinh = await git.UpdateOneImg(file, "User");
                 if (urlHinh is null) return ServiceResult<string>.Fail("Cập nhật ảnh đại diện thất bại", 500);
                 user.UrlHinh = urlHinh.Url;
+                user.UpdateAt = DateTime.UtcNow;
                 db.NhanVien.Update(user);
                 await db.SaveChangesAsync();
                 return ServiceResult<string>.Ok(user.UrlHinh);
@@ -160,5 +215,34 @@ namespace QuanLyKhoApi.Services
             }
         }
 
+        public async Task<ServiceResult<bool>> BlockUser(Guid Id)
+        {
+            try
+            {
+                var confirmAcc = await db.ComfirmAccounts.FirstOrDefaultAsync(tk => tk.IdTaiKhoan == Id);
+                if (confirmAcc is not null)
+                    return ServiceResult<bool>.Fail("Tài khoản chưa được chấp nhận nên không thể block", 400);
+                var Account = await db.TaiKhoan
+                .Include(tk => tk.TaiKhoanRoles)
+                .ThenInclude(tr => tr.Role)
+                .Include(t => t.NhanVien)
+                .FirstOrDefaultAsync(tk => tk.IdNhanVien == Id && !tk.TaiKhoanRoles.Any(tr => tr.Role.Id == "Admin"));
+
+                if (Account is null)
+                    return ServiceResult<bool>.Fail("Tài khoản không tồn tại", 404);
+                if (Account.NhanVien.trangthai == false)
+                    return ServiceResult<bool>.Fail("Tài khoản đã bị khóa trước đó", 400);
+                var user = Account.NhanVien;
+                user.trangthai = false;
+                db.NhanVien.Update(user);
+                await db.SaveChangesAsync();
+                return ServiceResult<bool>.Ok(true, 200, "Khóa tài khoản thành công");
+            }
+            catch (Exception ex)
+            {
+                return ServiceResult<bool>.Fail($"Lỗi: {ex.Message}", 500);
+
+            }
+        }
     }
 }

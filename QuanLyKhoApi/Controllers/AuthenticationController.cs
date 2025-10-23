@@ -11,63 +11,32 @@ namespace QuanLyKhoApi.Controllers
     [ApiController]
     public class AuthenticationController(IAuthService autsv) : ControllerBase
     {
-       // public static TaiKhoan user = new();
+        // public static TaiKhoan user = new();
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto req)
         {
-            try
-            {
-               var result = await autsv.RegisterAsync(req);
-
-                return MyStatusCodeBase.MyStatusCode(this, result);
-
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Lỗi máy chủ: {ex.Message}");
-            }
-
+            return MyStatusCodeBase.MyStatusCode(this, await autsv.RegisterAsync(req, false));
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody]LoginDto req)
+        public async Task<IActionResult> Login([FromBody] LoginDto req)
         {
-            try
-            {
-                var result = await autsv.LoginAsync(req);
-                
-                return MyStatusCodeBase.MyStatusCode(this, result);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Lỗi máy chủ: {ex.Message}");
-            }
+            return MyStatusCodeBase.MyStatusCode(this, await autsv.LoginAsync(req));
         }
 
         [HttpPost("refreshtoken")]
 
         public async Task<ActionResult<TokenResponseDto>> RefreshToken(RefreshTokenRequestDto tokenRequest)
         {
-            var token = await autsv.RefreshTokenAsync(tokenRequest);
-            
-            return MyStatusCodeBase.MyStatusCode(this, token);
+
+            return MyStatusCodeBase.MyStatusCode(this, await autsv.RefreshTokenAsync(tokenRequest));
         }
 
         [HttpPost("google-Login")]
         public async Task<IActionResult> GoogleLogin([FromBody] GoogleAuthDto dto)
         {
-            try
-            {
-                if (dto is null) return BadRequest("Không có id token được gửi");
-                var token = await autsv.GoogleLoginAsync(dto);
-               
-                return MyStatusCodeBase.MyStatusCode(this, token);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
+            return MyStatusCodeBase.MyStatusCode(this, await autsv.GoogleLoginAsync(dto));
         }
         public class GoogleRegisterRequest
         {
@@ -78,15 +47,7 @@ namespace QuanLyKhoApi.Controllers
         [HttpPost("google-register")]
         public async Task<IActionResult> GoogleRegister([FromBody] GoogleRegisterRequest req)
         {
-            try
-            {     
-                var newAcc = await autsv.RegisterGoogle(req.GG, req.Dto);
-                return MyStatusCodeBase.MyStatusCode(this, newAcc);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
+            return MyStatusCodeBase.MyStatusCode(this, await autsv.RegisterGoogle(req.GG, req.Dto));
         }
     }
 }

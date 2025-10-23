@@ -8,12 +8,8 @@ namespace QuanLyKhoApi.Profiles
     {
         public LoaiProfile()
         {
-            CreateMap<LoaiDto, Loai>()
-                .ForMember(dest => dest.Id, opt => opt.Ignore())
-                .ForMember(dest => dest.Deleted, opt => opt.MapFrom(src => false))
-                .ForMember(dest => dest.DeletedAt, opt => opt.Ignore());
-
-            CreateMap<Loai, LoaiDto>();
+            CreateMap<LoaiDto, Loai>().ReverseMap();
+            CreateMap<UpdateLoaiDto, Loai>().ReverseMap();
         }
     }
 }

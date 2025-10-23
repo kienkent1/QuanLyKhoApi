@@ -1,99 +1,93 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using QuanLyKhoApi.Dto;
+using QuanLyKhoApi.Helper;
 using QuanLyKhoApi.IServices;
 
 namespace QuanLyKhoApi.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
-    public class NhaCungCapController(INhaCungCapService nhaCungCapService) : ControllerBase
+    public class NhaCungCapController(INhaCungCapService nhaCungCapService, AuthorizationService auth) : ControllerBase
     {
-        [HttpPost("create")]
-        public async Task<IActionResult> CreateNhaCungCap([FromBody] NhaCungCapDto dto)
+
+        private class ClaimNhaCungCap
         {
-            try
-            {
-                if (!ModelState.IsValid)
-                    return BadRequest(ModelState);
-
-                var result = await nhaCungCapService.CreateNhaCungCapAsync(dto);
-                if (result is null)
-                    return BadRequest("Không thể tạo nhà cung cấp");
-
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Lỗi máy chủ: {ex.Message}");
-            }
+            public const string XemNhaCungCap = "XemNhaCungCap";
+            public const string ThemNhaCungCap = "ThemNhaCungCap";
+            public const string SuaNhaCungCap = "SuaNhaCungCap";
+            public const string XoaNhaCungCap = "XoaNhaCungCap";
+            public static readonly string[] NhaCungCapclaim = { XemNhaCungCap, ThemNhaCungCap, SuaNhaCungCap, XoaNhaCungCap };
         }
 
-        [HttpGet("get-all")]
-        public async Task<IActionResult> GetAllNhaCungCap()
+        [HttpGet]
+        public async Task<IActionResult> GetAll(
+            [FromQuery] string? query = null,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 12,
+            [FromQuery] SortOBJ? sort = null)
         {
-            try
+            var idUser = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var isHasClaim = await auth.RoleHasListClaimAsync(idUser, ClaimNhaCungCap.NhaCungCapclaim);
+            if (isHasClaim.Success == false)
             {
-                var nhaCungCaps = await nhaCungCapService.GetAllNhaCungCapAsync();
-                return Ok(nhaCungCaps);
+                return MyStatusCodeBase.MyStatusCode(this, isHasClaim);
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Lỗi máy chủ: {ex.Message}");
-            }
+            var result = await nhaCungCapService.GetAllNhaCungCapAsync(query, page, pageSize, sort);
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
-        [HttpGet("get-by-id/{id}")]
-        public async Task<IActionResult> GetNhaCungCapById(int id)
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
         {
-            try
+            var idUser = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var isHasClaim = await auth.RoleHasListClaimAsync(idUser, ClaimNhaCungCap.NhaCungCapclaim);
+            if (isHasClaim.Success == false)
             {
-                var nhaCungCap = await nhaCungCapService.GetNhaCungCapByIdAsync(id);
-                if (nhaCungCap is null)
-                    return NotFound("Không tìm thấy nhà cung cấp");
-
-                return Ok(nhaCungCap);
+                return MyStatusCodeBase.MyStatusCode(this, isHasClaim);
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Lỗi máy chủ: {ex.Message}");
-            }
+            var result = await nhaCungCapService.GetNhaCungCapByIdAsync(id);
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
-        [HttpPut("update/{id}")]
-        public async Task<IActionResult> UpdateNhaCungCap(int id, [FromBody] NhaCungCapDto dto)
+        [HttpPost]
+        public async Task<IActionResult> Create([FromForm] NhaCungCapDto dto)
         {
-            try
+            var idUser = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var isHasClaim = await auth.RoleHasClaimAsync(idUser, ClaimNhaCungCap.ThemNhaCungCap);
+            if (isHasClaim.Success == false)
             {
-                if (!ModelState.IsValid)
-                    return BadRequest(ModelState);
-
-                var result = await nhaCungCapService.UpdateNhaCungCapAsync(id, dto);
-                if (!result)
-                    return BadRequest("Không thể cập nhật nhà cung cấp");
-
-                return Ok("Cập nhật thành công");
+                return MyStatusCodeBase.MyStatusCode(this, isHasClaim);
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Lỗi máy chủ: {ex.Message}");
-            }
+            var result = await nhaCungCapService.CreateNhaCungCapAsync(dto);
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
-        [HttpDelete("delete/{id}")]
-        public async Task<IActionResult> DeleteNhaCungCap(int id)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromForm] NhaCungCapUpdateDto dto)
         {
-            try
+            var idUser = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var isHasClaim = await auth.RoleHasClaimAsync(idUser, ClaimNhaCungCap.SuaNhaCungCap);
+            if (isHasClaim.Success == false)
             {
-                var result = await nhaCungCapService.DeleteNhaCungCapAsync(id);
-                if (!result)
-                    return BadRequest("Không thể xóa nhà cung cấp");
+                return MyStatusCodeBase.MyStatusCode(this, isHasClaim);
+            }
+            var result = await nhaCungCapService.UpdateNhaCungCapAsync(id, dto);
+            return MyStatusCodeBase.MyStatusCode(this, result);
+        }
 
-                return Ok("Xóa thành công");
-            }
-            catch (Exception ex)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var idUser = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var isHasClaim = await auth.RoleHasClaimAsync(idUser, ClaimNhaCungCap.XoaNhaCungCap);
+            if (isHasClaim.Success == false)
             {
-                return StatusCode(500, $"Lỗi máy chủ: {ex.Message}");
+                return MyStatusCodeBase.MyStatusCode(this, isHasClaim);
             }
+            var result = await nhaCungCapService.DeleteNhaCungCapAsync(id);
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
     }
 }

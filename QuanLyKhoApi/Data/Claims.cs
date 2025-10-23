@@ -9,6 +9,7 @@ namespace QuanLyKhoApi.Data
         public int Id { get; set; }
 
         public string Quyen { get; set; }
+        public string? Category { get; set; }
         public ICollection<RoleClaim> RoleClaims { get; set; } = new List<RoleClaim>();
     }
 }

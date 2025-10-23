@@ -11,8 +11,6 @@ namespace QuanLyKhoApi.Data
         public DateTime NgayNhap { get; set; } = DateTime.UtcNow;
         [Required]
         public Guid MaNV { get; set; }
-        [Required]
-        public string MaNCC { get; set; }
         public decimal? GiaNhap { get; set; }
         [Required]
         public Guid MaHH { get; set; }
@@ -21,6 +19,7 @@ namespace QuanLyKhoApi.Data
         [Required]
         public int MaTrangThai { get; set; }
         public string? GhiChu { get; set; }
+        public int? SoLuong { get; set; }
 
         [ForeignKey(nameof(MaTrangThai))]
         public TrangThaiPhieu TrangThaiPhieu { get; set; }

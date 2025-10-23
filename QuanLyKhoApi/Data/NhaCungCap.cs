@@ -9,7 +9,7 @@ namespace QuanLyKhoApi.Data
         public int MaNCC { get; set; }
         [Required, MaxLength(200)]
         public string TenNCC { get; set; }
-        public string? DiaChi { get; set; }
+        public Dictionary<string, object>? DiaChi { get; set; }
         [Required, MaxLength(15)]
         public string DienThoai { get; set; }
         public string? Email { get; set; }

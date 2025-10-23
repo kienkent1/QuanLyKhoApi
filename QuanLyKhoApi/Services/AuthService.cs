@@ -2,8 +2,10 @@
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Update;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.VisualBasic;
+using Newtonsoft.Json.Linq;
 using QuanLyKhoApi.Data;
 using QuanLyKhoApi.Dto.AuthenDto;
 using QuanLyKhoApi.Helper;
@@ -17,7 +19,7 @@ namespace QuanLyKhoApi.Services
     public class AuthService(AppDbContext context, IConfiguration configuration, IMapper mapper) : IAuthService
     {
         //tạo token
-        private string CreateToken(TaiKhoan user)
+        public string CreateToken(TaiKhoan user)
         {
             var claims = new List<Claim>
             {
@@ -60,52 +62,54 @@ namespace QuanLyKhoApi.Services
         }
 
         //kiểm tra token có còn hợp lệ
-        private async Task<TaiKhoan?> ValidateRefreshTokenAsync(Guid userId, string refreshToken)
+        private async Task<TaiKhoan?> ValidateRefreshTokenAsync(string refreshToken)
         {
             var token = await context.TaiKhoanToken
-        .FirstOrDefaultAsync(t => t.IdTaiKhoan == userId && t.RefreshToken == refreshToken);
+        .FirstOrDefaultAsync(t => t.Id.ToString() == refreshToken);
 
-            if (token is null )return null;
-            if( token.ExpiryTime < DateTime.UtcNow)
-            {
-                context.TaiKhoanToken.Remove(token);
-                await context.SaveChangesAsync();
-                return null;
-            }
-                
+            if (token is null) return null;
 
             // load user kèm role 
             return await context.TaiKhoan
                 .Include(u => u.TaiKhoanRoles)
                 .ThenInclude(tr => tr.Role)
-                .FirstOrDefaultAsync(u => u.IdNhanVien == userId);
+                .FirstOrDefaultAsync(u => u.IdNhanVien == token.IdTaiKhoan);
         }
 
         //tạo vào lưu token mới
         private async Task<string> GenerateAndSaveRefreshToken(Guid IdTaiKhoan)
         {
-
-            var refreshToken = CreateRefreshToken();
-
-            var token = new TaiKhoanToken
+            var token = await context.TaiKhoanToken.AddAsync(new TaiKhoanToken
             {
                 IdTaiKhoan = IdTaiKhoan,
-                RefreshToken = refreshToken,
                 ExpiryTime = DateTime.UtcNow.AddDays(2)
-            };
-            context.TaiKhoanToken.Add(token);
+            });
+
             await context.SaveChangesAsync();
-            return refreshToken;
+
+            return token.Entity.Id.ToString();
         }
 
         //tạo token trả về
-        private async Task<TokenResponseDto> CreateTokenResponseAsync(TaiKhoan user)
+        private async Task<TokenResponseDto> CreateTokenResponseAsync(TaiKhoan user, bool isTokenExpry, string? refToken)
         {
-            return new TokenResponseDto
+            if (isTokenExpry is true)
             {
-                AccessToken = CreateToken(user),
-                RefreshToken = await GenerateAndSaveRefreshToken(user.IdNhanVien)
-            };
+                return new TokenResponseDto
+                {
+                    AccessToken = CreateToken(user),
+                    RefreshToken = refToken
+                };
+            }
+            else
+            {
+                return new TokenResponseDto
+                {
+                    AccessToken = CreateToken(user),
+                    RefreshToken = await GenerateAndSaveRefreshToken(user.IdNhanVien)
+                };
+            }
+
         }
 
         //check user tồn tại
@@ -118,9 +122,13 @@ namespace QuanLyKhoApi.Services
         {
             if (await context.TaiKhoan.AnyAsync(u => u.IdNhanVien == id))
                 return false;
-            if (await context.TaiKhoan.AnyAsync(u => u.TenDangNhap == userName))
-                return false;
-            if(await ExitsUser(id))
+            if (userName is not null && !string.IsNullOrEmpty(userName))
+            {
+                if (await context.TaiKhoan.AnyAsync(u => u.TenDangNhap == userName))
+                    return false;
+            }
+
+            if (await ExitsUser(id))
                 return true;
             return true;
         }
@@ -129,12 +137,12 @@ namespace QuanLyKhoApi.Services
         {
             return await context.NhanVien.AnyAsync(u => u.email == email);
         }
-        public async Task<ServiceResult<TaiKhoan>> RegisterAsync(RegisterDto req)
+        public async Task<ServiceResult<RegisterDto>> RegisterAsync(RegisterDto req, bool isFromAdmin = false)
         {
             try
             {
                 if (await ValidateAccount(req.IdNhanVien, req.TenDangNhap) == false)
-                    return ServiceResult<TaiKhoan>.Fail("Tên đăng nhập hoặc tài khoản đã tồn tại", 400);
+                    return ServiceResult<RegisterDto>.Fail("Tên đăng nhập hoặc tài khoản đã tồn tại", 400);
 
                 var hashedPass = new PasswordHasher<RegisterDto>()
                     .HashPassword(req, req.Password);
@@ -148,29 +156,50 @@ namespace QuanLyKhoApi.Services
                     TaiKhoanId = req.IdNhanVien,
                     RoleId = "user"
                 };
-                context.TaiKhoanRoles.Add(userRole);
+                await context.TaiKhoanRoles.AddAsync(userRole);
+
+                if (isFromAdmin == false)
+                {
+                    await context.ComfirmAccounts.AddAsync(new ComfirmAccount
+                    {
+                        IdTaiKhoan = req.IdNhanVien,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+                else
+                {
+                    var userTT = await context.NhanVien.FindAsync(req.IdNhanVien);
+                    if (userTT.trangthai == false)
+                    {
+                        userTT.trangthai = true;
+                        context.NhanVien.Update(userTT);
+                    }
+                }
+
+
                 await context.SaveChangesAsync();
-                return ServiceResult<TaiKhoan>.Ok(account, 201);
+
+                return ServiceResult<RegisterDto>.Ok(req, 201);
             }
             catch (Exception ex)
             {
-                return ServiceResult<TaiKhoan>.Fail("Lỗi hệ thống", 500);
+                return ServiceResult<RegisterDto>.Fail("Lỗi hệ thống", 500);
             }
 
         }
-        public async Task<ServiceResult< TokenResponseDto>?> LoginAsync(LoginDto req)
+        public async Task<ServiceResult<TokenResponseDto>?> LoginAsync(LoginDto req)
         {
             var user = await context.TaiKhoan
                  .Include(t => t.NhanVien)
                  .Include(t => t.TaiKhoanRoles)
          .ThenInclude(tr => tr.Role)
         .FirstOrDefaultAsync(t =>
-            t.TenDangNhap == req.UserNameOrEmail ||
+            (t.TenDangNhap == req.UserNameOrEmail) ||
             t.NhanVien.email == req.UserNameOrEmail);
 
             if (user is null) return ServiceResult<TokenResponseDto>.Fail("Tên đăng nhập hoặc Email không chính xác", 400);
 
-            if( user.NhanVien.trangthai is false)
+            if (user.NhanVien.trangthai is false)
             {
                 return ServiceResult<TokenResponseDto>.Fail("Tài khoản của bạn hiện không thể đăng nhập. Vui lòng liên hệ Admin", 403);
             }
@@ -182,26 +211,29 @@ namespace QuanLyKhoApi.Services
             }
 
 
-            return ServiceResult<TokenResponseDto>.Ok( await CreateTokenResponseAsync(user));
+            return ServiceResult<TokenResponseDto>.Ok(await CreateTokenResponseAsync(user, false, null));
         }
 
-        public async Task<ServiceResult< TokenResponseDto>?> RefreshTokenAsync(RefreshTokenRequestDto req)
+        public async Task<ServiceResult<TokenResponseDto>?> RefreshTokenAsync(RefreshTokenRequestDto req)
         {
-            var user = await ValidateRefreshTokenAsync(req.UserId, req.RefreshToken);
+            var user = await ValidateRefreshTokenAsync(req.RefreshToken);
             if (user is null) return ServiceResult<TokenResponseDto>.Fail("RefreshToken không hợp lệ", 400);
             var refToken = await context.TaiKhoanToken
-                .FirstOrDefaultAsync(t => t.IdTaiKhoan == req.UserId && t.RefreshToken == req.RefreshToken);
-            if (refToken is  null)
+                .FirstOrDefaultAsync(t => t.Id.ToString() == req.RefreshToken);
+            if (refToken.ExpiryTime < DateTime.UtcNow)
             {
-                return ServiceResult<TokenResponseDto>.Fail("Refreshtoken không chính xác", 400);
-            } 
-            
-            return ServiceResult<TokenResponseDto>.Ok( await CreateTokenResponseAsync(user));
+                context.TaiKhoanToken.Remove(refToken);
+                await context.SaveChangesAsync();
+                return ServiceResult<TokenResponseDto>.Ok(await CreateTokenResponseAsync(user, false, null));
+            }
+
+
+            return ServiceResult<TokenResponseDto>.Ok(await CreateTokenResponseAsync(user, true, req.RefreshToken));
         }
 
 
         #region Authentication GG
-        public  async Task<GoogleResponse> GetGoogleResponse(GoogleAuthDto dto)
+        public async Task<GoogleResponse> GetGoogleResponse(GoogleAuthDto dto)
         {
             GoogleJsonWebSignature.Payload payload;
             try
@@ -222,7 +254,7 @@ namespace QuanLyKhoApi.Services
                 var res = new GoogleResponse();
                 res.GoogleSub = payload.Subject;
                 res.Email = payload.Email.Trim().ToLowerInvariant();
-                res.EmailVerified  = payload.EmailVerified;
+                res.EmailVerified = payload.EmailVerified;
                 res.Picture = payload.Picture;
                 return res;
             }
@@ -231,66 +263,91 @@ namespace QuanLyKhoApi.Services
                 return null;
             }
         }
-        public async Task<ServiceResult< RegisterGG>?> RegisterGoogle(RegisterGG req, GoogleAuthDto gg)
+        public async Task<ServiceResult<RegisterGG>?> RegisterGoogle(RegisterGG req, GoogleAuthDto gg)
         {
+            await using var transaction = await context.Database.BeginTransactionAsync();
             try
             {
                 var res = await GetGoogleResponse(gg);
-                if (res is  null) return ServiceResult<RegisterGG>.Fail("Token không hợp lệ", 400);
+                if (res is null) return ServiceResult<RegisterGG>.Fail("Token không hợp lệ", 400);
                 var exitsUser = await ExitsUser(req.IdNhanVien);
                 if (exitsUser is false) return ServiceResult<RegisterGG>.Fail("Nhân viên không tồn tại", 404);
+                var userGG = await context.NhanVien.Include(n => n.TaiKhoan).FirstOrDefaultAsync(n => n.IdNhanVien == req.IdNhanVien);
+                if (userGG.TaiKhoan.GoogleId is not null) return ServiceResult<RegisterGG>.Fail("Tài khoản google này đã tồn tại", 400);
+                if (string.IsNullOrEmpty(req.TenDangNhap) && userGG.TaiKhoan.TenDangNhap is null) req.TenDangNhap = res.Email;
+                if (req.TenDangNhap is not null && userGG.TaiKhoan.TenDangNhap == req.TenDangNhap.Trim()) return ServiceResult<RegisterGG>.Fail("Tên đăng nhập đã tồn tại", 400);
 
-                var validateAccount = await ValidateAccount(req.IdNhanVien, req.TenDangNhap);
-                if (validateAccount is false) return ServiceResult<RegisterGG>.Fail("Tên đăng nhập đã tồn tại", 400);
-                if (String.IsNullOrEmpty(req.TenDangNhap)) req.TenDangNhap = res.Email;
-         
-                req.CreatedAt = DateTime.UtcNow;
-                var account = mapper.Map<TaiKhoan>(req);
-                account.GoogleId = res.GoogleSub;
-                context.TaiKhoan.Add(account);
-                var userRole = new TaiKhoanRole
+                var updateAcc = await context.TaiKhoan.FindAsync(userGG.TaiKhoan.IdNhanVien);
+                if (updateAcc is not null)
                 {
-                    TaiKhoanId = req.IdNhanVien,
-                    RoleId = "user"
-                };
-                context.TaiKhoanRoles.Add(userRole);
+                    updateAcc.GoogleId = res.GoogleSub;
+
+
+                    context.TaiKhoan.Update(updateAcc);
+
+                }
+                else
+                {
+                    req.CreatedAt = DateTime.UtcNow;
+                    var account = mapper.Map<TaiKhoan>(req);
+                    account.GoogleId = res.GoogleSub;
+                    context.TaiKhoan.Add(account);
+                    var userRole = new TaiKhoanRole
+                    {
+                        TaiKhoanId = req.IdNhanVien,
+                        RoleId = "user"
+                    };
+                    context.TaiKhoanRoles.Add(userRole);
+                }
+
 
                 var user = await context.NhanVien.Include(u => u.TaiKhoan)
-                    .FirstOrDefaultAsync(nv =>nv.IdNhanVien == req.IdNhanVien && nv.UrlHinh == null);
+                    .FirstOrDefaultAsync(nv => nv.IdNhanVien == req.IdNhanVien && nv.UrlHinh == null);
                 if (user is not null)
                 {
                     user.UrlHinh = res.Picture;
                     context.NhanVien.Update(user);
                 }
+                await context.ComfirmAccounts.AddAsync(new ComfirmAccount
+                {
+                    IdTaiKhoan = req.IdNhanVien,
+                    CreatedAt = DateTime.UtcNow
+                });
                 await context.SaveChangesAsync();
+                await transaction.CommitAsync();
                 return ServiceResult<RegisterGG>.Ok(req);
             }
             catch (Exception ex)
             {
+                await transaction.RollbackAsync();
                 return ServiceResult<RegisterGG>.Fail($"Lỗi: {ex.Message}", 500);
             }
         }
-        public async Task<ServiceResult< TokenResponseDto>?> GoogleLoginAsync(GoogleAuthDto dto)
+        public async Task<ServiceResult<TokenResponseDto>?> GoogleLoginAsync(GoogleAuthDto dto)
         {
             try
             {
                 var GGResponse = await GetGoogleResponse(dto);
-                if( GGResponse is null) return ServiceResult<TokenResponseDto>.Fail("Id token không hợp lệ", 400);
+                if (GGResponse is null) return ServiceResult<TokenResponseDto>.Fail("Id token không hợp lệ", 400);
                 var Account = await context.TaiKhoan.Include(u => u.NhanVien)
-                    .FirstOrDefaultAsync(u => u.GoogleId == GGResponse.GoogleSub  || u.NhanVien.email == GGResponse.Email);
+                    .FirstOrDefaultAsync(u => u.GoogleId == GGResponse.GoogleSub || u.NhanVien.email == GGResponse.Email);
 
 
 
                 if (Account is not null)
                 {
-                    if (Account.GoogleId == GGResponse.GoogleSub)
+                    if (Account.GoogleId == GGResponse.GoogleSub && Account.NhanVien.trangthai != false)
                     {
-                        return ServiceResult<TokenResponseDto>.Ok( await CreateTokenResponseAsync(Account));
+                        return ServiceResult<TokenResponseDto>.Ok(await CreateTokenResponseAsync(Account, false, null));
+                    }
+                    else if (Account.NhanVien.trangthai == false)
+                    {
+                        return ServiceResult<TokenResponseDto>.Fail("Tài khoản của bạn hiện không thể đăng nhập. Vui lòng liên hệ Admin", 403);
                     }
                     else
                     {
                         var isAccExit = await context.TaiKhoan.FirstOrDefaultAsync(t => t.GoogleId == GGResponse.GoogleSub);
-                        if (isAccExit is not null) return ServiceResult<TokenResponseDto>.Ok(await CreateTokenResponseAsync(isAccExit));
+                        if (isAccExit is not null) return ServiceResult<TokenResponseDto>.Ok(await CreateTokenResponseAsync(isAccExit, false, null));
                         else return ServiceResult<TokenResponseDto>.Fail("Tài khoản không tồn tại", 404);
                     }
 
@@ -302,7 +359,7 @@ namespace QuanLyKhoApi.Services
             }
             catch (Exception ex)
             {
-                return ServiceResult<TokenResponseDto>.Fail($"Lỗi: {ex.Message}" , 500);
+                return ServiceResult<TokenResponseDto>.Fail($"Lỗi: {ex.Message}", 500);
             }
 
         }

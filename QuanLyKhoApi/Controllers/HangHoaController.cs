@@ -1,139 +1,172 @@
-﻿using AutoMapper;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using QuanLyKhoApi.Data;
 using QuanLyKhoApi.Dto;
+using QuanLyKhoApi.Helper;
 using QuanLyKhoApi.IServices;
+using System.Net;
+using System.Security.Claims;
 
 namespace QuanLyKhoApi.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
-    public class HangHoaController(IHangHoaService hangHoaService, IMapper mapper) : ControllerBase
+    [Route("api/[controller]")]
+    public class HangHoaController(IHangHoaService service, AuthorizationService auth) : ControllerBase
     {
-        private readonly IHangHoaService _hangHoaService = hangHoaService;
-        private readonly IMapper _mapper = mapper;
-
-        [HttpPost("create-hang-hoa")]
-        public async Task<IActionResult> CreateHangHoa([FromBody] HangHoaDto dto)
+        private class ClaimHangHoa
         {
-            try
-            {
-                if (!ModelState.IsValid)
-                    return BadRequest(ModelState);
-
-                var result = await _hangHoaService.CreateHangHoaAsync(dto);
-                if (result is null) return BadRequest("Không thể tạo hàng hóa hoặc loại/nhà cung cấp không tồn tại");
-                var hangHoaDto = _mapper.Map<HangHoaDto>(result);
-                return Ok(hangHoaDto);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Lỗi máy chủ: {ex.Message}");
-            }
+            public const string XemHangHoa = "XemHangHoa";
+            public const string ThemHangHoa = "ThemHangHoa";
+            public const string SuaHangHoa = "SuaHangHoa";
+            public const string XoaHangHoa = "XoaHangHoa";
+            public static readonly string[] HangHoaclaim = { XemHangHoa, ThemHangHoa, SuaHangHoa, XoaHangHoa };
         }
 
-        [HttpPost("create-cau-hinh")]
-        public async Task<IActionResult> CreateCauHinh([FromBody] CauHinhDto dto)
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] HangHoaDto dto)
         {
-            try
+            var iduser = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isHasClaim = await auth.RoleHasClaimAsync(iduser, ClaimHangHoa.ThemHangHoa);
+            if (isHasClaim.Success == false)
             {
-                var result = await _hangHoaService.CreateCauHinhAsync(dto);
-                if (result is null) return BadRequest("Không thể tạo cấu hình hoặc hàng hóa không tồn tại");
-                return Ok(result);
+                return MyStatusCodeBase.MyStatusCode(this, isHasClaim);
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Lỗi máy chủ: {ex.Message}");
-            }
+            var result = await service.CreateHangHoaAsync(dto);
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
-        [HttpGet("get-all")]
-        public async Task<IActionResult> GetAllHangHoa()
+        [HttpGet]
+        public async Task<IActionResult> GetAll(
+            [FromQuery] string? query = null,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 12,
+            [FromQuery] SortOBJ? sort = null)
         {
-            try
+            var iduser = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isHasClaim = await auth.RoleHasListClaimAsync(iduser, ClaimHangHoa.HangHoaclaim);
+            if (isHasClaim.Success == false)
             {
-                var hangHoas = await _hangHoaService.GetAllHangHoaAsync();
-                return Ok(hangHoas);
+                return MyStatusCodeBase.MyStatusCode(this, isHasClaim);
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Lỗi máy chủ: {ex.Message}");
-            }
+            var result = await service.GetAllHangHoaAsync(query, page, pageSize, sort);
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
-        [HttpGet("get-by-id/{id}")]
-        public async Task<IActionResult> GetHangHoaById(Guid id)
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(string id)
         {
-            try
+            var iduser = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isHasClaim = await auth.RoleHasListClaimAsync(iduser, ClaimHangHoa.HangHoaclaim);
+            if (isHasClaim.Success == false)
             {
-                var hangHoa = await _hangHoaService.GetHangHoaByIdAsync(id);
-                if (hangHoa is null) return NotFound("Không tìm thấy hàng hóa");
-                return Ok(hangHoa);
+                return MyStatusCodeBase.MyStatusCode(this, isHasClaim);
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Lỗi máy chủ: {ex.Message}");
-            }
+            var result = await service.GetHangHoaByIdAsync(id);
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
-        [HttpPut("update-hang-hoa/{id}")]
-        public async Task<IActionResult> UpdateHangHoa(Guid id, [FromBody] HangHoaDto dto)
+        [HttpPost("scan")]
+        public async Task<IActionResult> GetByScanCode([FromForm] Getfile dto)
         {
-            try
+            var iduser = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isHasClaim = await auth.RoleHasListClaimAsync(iduser, ClaimHangHoa.HangHoaclaim);
+            if (isHasClaim.Success == false)
             {
-                var result = await _hangHoaService.UpdateHangHoaAsync(id, dto);
-                if (!result) return BadRequest("Không thể cập nhật hàng hóa");
-                return Ok("Cập nhật thành công");
+                return MyStatusCodeBase.MyStatusCode(this, isHasClaim);
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Lỗi máy chủ: {ex.Message}");
-            }
+            var result = await service.FindByBarCode(dto.file);
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
-        [HttpDelete("delete-hang-hoa/{id}")]
-        public async Task<IActionResult> DeleteHangHoa(Guid id)
+        [HttpGet("{id}/gen-barcode")]
+        public async Task<IActionResult> GenBarCode(string id)
         {
-            try
+            var iduser = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isHasClaim = await auth.RoleHasListClaimAsync(iduser, ClaimHangHoa.HangHoaclaim);
+            if (isHasClaim.Success == false)
             {
-                var result = await _hangHoaService.DeleteHangHoaAsync(id);
-                if (!result) return BadRequest("Không thể xóa hàng hóa");
-                return Ok("Xóa thành công");
+                return MyStatusCodeBase.MyStatusCode(this, isHasClaim);
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Lỗi máy chủ: {ex.Message}");
-            }
+            var result = await service.GenBarCode(id);
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
-        [HttpPut("update-cau-hinh/{id}")]
-        public async Task<IActionResult> UpdateCauHinh(Guid id, [FromBody] CauHinhDto dto)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(Guid id, [FromBody] HangHoaDto dto)
         {
-            try
+            var iduser = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isHasClaim = await auth.RoleHasClaimAsync(iduser, ClaimHangHoa.SuaHangHoa);
+            if (isHasClaim.Success == false)
             {
-                var result = await _hangHoaService.UpdateCauHinhAsync(id, dto);
-                if (!result) return BadRequest("Không thể cập nhật cấu hình");
-                return Ok("Cập nhật thành công");
+                return MyStatusCodeBase.MyStatusCode(this, isHasClaim);
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Lỗi máy chủ: {ex.Message}");
-            }
+            var result = await service.UpdateHangHoaAsync(id, dto);
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
-        [HttpDelete("delete-cau-hinh/{id}")]
-        public async Task<IActionResult> DeleteCauHinh(Guid id)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(Guid id)
         {
-            try
+            var iduser = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isHasClaim = await auth.RoleHasClaimAsync(iduser, ClaimHangHoa.XoaHangHoa);
+            if (isHasClaim.Success == false)
             {
-                var result = await _hangHoaService.DeleteCauHinhAsync(id);
-                if (!result) return BadRequest("Không thể xóa cấu hình");
-                return Ok("Xóa thành công");
+                return MyStatusCodeBase.MyStatusCode(this, isHasClaim);
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Lỗi máy chủ: {ex.Message}");
-            }
+            var result = await service.DeleteHangHoaAsync(id);
+            return MyStatusCodeBase.MyStatusCode(this, result);
         }
+
+        [HttpGet("{cauHinhId}/configs")]
+        public async Task<IActionResult> GetConfigs(Guid hangHoaId)
+        {
+            var iduser = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isHasClaim = await auth.RoleHasListClaimAsync(iduser, ClaimHangHoa.HangHoaclaim);
+            if (isHasClaim.Success == false)
+            {
+                return MyStatusCodeBase.MyStatusCode(this, isHasClaim);
+            }
+            var result = await service.GetCauHinhById(hangHoaId);
+            return MyStatusCodeBase.MyStatusCode(this, result);
+        }
+
+        [HttpPost("configs/{id}")]
+        public async Task<IActionResult> CreateMultipleConfigs([FromRoute] Guid id, [FromBody] List<CreateCauHinhDto> dto)
+        {
+            var iduser = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isHasClaim = await auth.RoleHasClaimAsync(iduser, ClaimHangHoa.ThemHangHoa);
+            if (isHasClaim.Success == false)
+            {
+                return MyStatusCodeBase.MyStatusCode(this, isHasClaim);
+            }
+            var result = await service.CreateMultipleConfigsAsync(id, dto);
+            return MyStatusCodeBase.MyStatusCode(this, result);
+        }
+
+        [HttpPost("configs/{id}/images")]
+        public async Task<IActionResult> AddHinhAnhCauHing([FromRoute] Guid id, [FromForm] IFormFile[] files)
+        {
+            var iduser = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isHasClaim = await auth.RoleHasClaimAsync(iduser, ClaimHangHoa.SuaHangHoa);
+            if (isHasClaim.Success == false)
+            {
+                return MyStatusCodeBase.MyStatusCode(this, isHasClaim);
+            }
+            var result = await service.AddHinhAnhCauHing(id, files);
+            return MyStatusCodeBase.MyStatusCode(this, result);
+        }
+
+        [HttpDelete("configs/images")]
+        public async Task<IActionResult> DeleteHinhAnhCauHinh([FromBody] Guid[] id)
+        {
+            var iduser = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var isHasClaim = await auth.RoleHasClaimAsync(iduser, ClaimHangHoa.SuaHangHoa);
+            if (isHasClaim.Success == false)
+            {
+                return MyStatusCodeBase.MyStatusCode(this, isHasClaim);
+            }
+            var result = await service.DeleteHinhAnhCauHinhAsync(id);
+            return MyStatusCodeBase.MyStatusCode(this, result);
+        }
+
     }
 }
