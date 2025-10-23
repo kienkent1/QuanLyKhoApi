@@ -122,10 +122,11 @@ namespace QuanLyKhoApi.Controllers
         }
 
         [Authorize]
-        [HttpPatch("{id}/avatar")]
-        public async Task<IActionResult> UpdateAvatar(Guid id, IFormFile file)
+        [HttpPatch("avatar")]
+        public async Task<IActionResult> UpdateAvatar(IFormFile file)
         {
-            var result = await service.UpdateAvatarNV(id.ToString(), file);
+            var idUser = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var result = await service.UpdateAvatarNV(idUser.ToString(), file);
             return MyStatusCodeBase.MyStatusCode(this, result);
         }
 
