@@ -46,6 +46,7 @@ namespace QuanLyKhoApi.Controllers
             {
                 return MyStatusCodeBase.MyStatusCode(this, isHasClaim);
             }
+            dto.MaNV = Guid.Parse(idUser);
             var result = await service.CreatePhieuNhapAsync(dto);
             return this.MyStatusCode(result);
         }

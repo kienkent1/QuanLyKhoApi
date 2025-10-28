@@ -14,7 +14,13 @@ namespace QuanLyKhoApi.Services
         {
             try
             {
+
                 var nhaCungCap = mapper.Map<NhaCungCap>(dto);
+                if (dto.HinhAnh is not null)
+                {
+                    var urlImg = await git.UpdateOneImg(dto.HinhAnh, "NhaCungCap");
+                    nhaCungCap.HinhAnh = urlImg.Url;
+                }
                 nhaCungCap.CreateAt = DateTime.UtcNow;
                 context.NhaCungCap.Add(nhaCungCap);
                 await context.SaveChangesAsync();
@@ -49,8 +55,13 @@ namespace QuanLyKhoApi.Services
                 {
                     nhaCungCaps = nhaCungCaps.Where(n =>
                         n.TenNCC.Contains(query) ||
-                        n.DienThoai.Contains(query) ||
-                        n.Email.Contains(query));
+                        n.Email.Contains(query) ||
+                        n.MaNCC.ToString() == query);
+                }
+                var totalCount = await nhaCungCaps.CountAsync();
+                if (totalCount == 0)
+                {
+                    return ServiceResult<PaginatedResult<List<NhaCungCap>>>.Ok(null, 200, "Không tìm thấy nhà cung cấp phù hợp");
                 }
                 var result = await Helper.Pagination<NhaCungCap>.PaginationAsync(nhaCungCaps, page, pageSize, sort);
                 return ServiceResult<PaginatedResult<List<NhaCungCap>>>.Ok(result);

@@ -13,7 +13,7 @@ using static QuanLyKhoApi.Helper.GitHubImageService;
 
 namespace QuanLyKhoApi.Helper
 {
-    public sealed  class GitHubImageService(IOptions<GitHubOptions> git)
+    public sealed class GitHubImageService(IOptions<GitHubOptions> git)
     {
         //link hiển thị ảnh : https://raw.githubusercontent.com/kienkent1/QuanLyKhoImg/main/(folder)/name //download_url
 
@@ -22,13 +22,14 @@ namespace QuanLyKhoApi.Helper
         private string Owner = git.Value.Owner;
         private string Repo = git.Value.Repo;
         private static readonly HttpClient client = new HttpClient();
-        
-        public  async Task<List<GitHubRes>> UpdateimgList(IFormFile[] files , string folder)
+
+        public async Task<List<GitHubRes>> UpdateimgList(IFormFile[] files, string folder)
         {
-    
+
             if (files is null) return null;
             List<GitHubRes> result = new List<GitHubRes>();
-            for (var i = 0; i < files.Length; i++) {
+            for (var i = 0; i < files.Length; i++)
+            {
                 var item = await UpdateImgAsync(files[i], folder);
                 result.Add(item);
             }
@@ -78,7 +79,8 @@ namespace QuanLyKhoApi.Helper
             var token = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
 
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            client.DefaultRequestHeaders.UserAgent.ParseAdd("QuanLyKhoImg/1.0"); 
+            Console.WriteLine(token);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("QuanLyKhoImg/1.0");
 
             using var memoryStream = new MemoryStream();
             await file.CopyToAsync(memoryStream);
@@ -108,8 +110,8 @@ namespace QuanLyKhoApi.Helper
                 using var doc = JsonDocument.Parse(json);
                 GitHubRes url = new GitHubRes();
                 url.Path = doc.RootElement.GetProperty("content").GetProperty("path").GetString();
-                url.Url = doc.RootElement.GetProperty("content").GetProperty("download_url").GetString(); 
-                return url; 
+                url.Url = doc.RootElement.GetProperty("content").GetProperty("download_url").GetString();
+                return url;
             }
             catch (Exception ex)
             {
@@ -130,7 +132,7 @@ namespace QuanLyKhoApi.Helper
                                        .Replace("đ", "d")
                                        .Replace("Đ", "D");
 
-      
+
             string slug = Regex.Replace(noDiacritics, @"\s+", "-");
 
             slug = Regex.Replace(slug, @"[^a-zA-Z0-9\.\-]", "").ToLower();
@@ -146,7 +148,7 @@ namespace QuanLyKhoApi.Helper
             public string Message { get; set; }
 
             public string Content { get; set; }
-            public string Sha {  get; set; }
+            public string Sha { get; set; }
         }
         public class GitHubOptions
         {
@@ -154,12 +156,12 @@ namespace QuanLyKhoApi.Helper
             public string Owner { get; set; }
             public string Repo { get; set; }
             public string Branch { get; set; }
-        } 
+        }
         public class GitHubRes
         {
             public string Path { get; set; }
             public string Url { get; set; }
         }
-       
+
     }
 }
