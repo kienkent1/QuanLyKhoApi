@@ -8,6 +8,9 @@ namespace QuanLyKhoApi.Dto
         [MaxLength(200, ErrorMessage = "Model không được quá 200 ký tự")]
         public string Model { get; set; }
 
+        [RegularExpression(@"^[a-zA-Z0-9_-]+$", ErrorMessage = "Mã hàng hóa chỉ được chứa chữ, số, dấu gạch ngang (-) và gạch dưới (_)")]
+        public string? MaHHShow { get; set; }
+
         [MaxLength(500, ErrorMessage = "Mô tả không được quá 500 ký tự")]
         public string? MoTa { get; set; }
 
@@ -30,6 +33,8 @@ namespace QuanLyKhoApi.Dto
     {
         public Guid Id { get; set; }
         [MaxLength(200, ErrorMessage = "Model không được quá 200 ký tự")]
+
+        public string MaHHShow { get; set; }
         public string Model { get; set; }
 
         [MaxLength(500, ErrorMessage = "Mô tả không được quá 500 ký tự")]
@@ -58,6 +63,8 @@ namespace QuanLyKhoApi.Dto
         public Guid Id { get; set; }
         [MaxLength(200, ErrorMessage = "Model không được quá 200 ký tự")]
         public string Model { get; set; }
+
+        public string MaHHShow { get; set; }
 
         [MaxLength(500, ErrorMessage = "Mô tả không được quá 500 ký tự")]
         public string? MoTa { get; set; }
