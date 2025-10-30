@@ -30,7 +30,8 @@ namespace QuanLyKhoApi.Helper
             List<GitHubRes> result = new List<GitHubRes>();
             for (var i = 0; i < files.Length; i++)
             {
-                var item = await UpdateImgAsync(files[i], folder);
+                IFormFile FileChecked = await CheckNameImg(files[i], folder);
+                var item = await UpdateImgAsync(FileChecked, folder);
                 result.Add(item);
             }
             return result;
@@ -38,7 +39,8 @@ namespace QuanLyKhoApi.Helper
         public async Task<GitHubRes> UpdateOneImg(IFormFile file, string folder)
         {
             if (file is null) return null;
-            var res = await UpdateImgAsync(file, folder);
+            IFormFile FileChecked = await CheckNameImg(file, folder);
+            var res = await UpdateImgAsync(FileChecked, folder);
             return res;
         }
         #region code lỏ
@@ -71,6 +73,59 @@ namespace QuanLyKhoApi.Helper
         //}
         #endregion
 
+        private async Task<IFormFile> CheckNameImg(IFormFile file, string folder)
+        {
+            if (file.Length > MaxFileSize)
+                throw new InvalidOperationException($"File {file.FileName} vượt quá dung lượng cho phép (10 MB).");
+
+            string convertFileName = ToSlug(file.FileName);
+            string path = $"{folder}/{convertFileName}";
+            string BaseUri = $"https://api.github.com/repos/{Owner}/{Repo}/contents/{path}";
+            var token = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("QuanLyKhoImg/1.0");
+
+            try
+            {
+                //  Kiểm tra file có tồn tại hay không
+                HttpResponseMessage res = await client.GetAsync(BaseUri);
+                if (res.StatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    // file đã tồn tại -> đổi tên
+                    string ext = Path.GetExtension(file.FileName);
+                    string newName = $"{Path.GetFileNameWithoutExtension(convertFileName)}_{DateTime.UtcNow:yyyyMMddHHmmss}{ext}";
+
+                    var memoryStream = new MemoryStream();
+                    await file.CopyToAsync(memoryStream);
+                    memoryStream.Position = 0;
+
+                    IFormFile newFile = new FormFile(memoryStream, 0, memoryStream.Length, file.Name, newName)
+                    {
+                        Headers = file.Headers,
+                        ContentType = file.ContentType
+                    };
+                    return newFile;
+                }
+                // nếu 404 => file chưa tồn tại, giữ nguyên
+                else if (res.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    return file;
+                }
+
+                res.EnsureSuccessStatusCode();
+                return file;
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                // file chưa tồn tại
+                return file;
+            }
+            catch
+            {
+                return file;
+            }
+        }
+
         private async Task<GitHubRes> UpdateImgAsync(IFormFile file, string folder)
         {
             if (file.Length > MaxFileSize)
@@ -79,7 +134,7 @@ namespace QuanLyKhoApi.Helper
             var token = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
 
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            Console.WriteLine(token);
+
             client.DefaultRequestHeaders.UserAgent.ParseAdd("QuanLyKhoImg/1.0");
 
             using var memoryStream = new MemoryStream();
@@ -115,7 +170,6 @@ namespace QuanLyKhoApi.Helper
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
                 return null;
             }
         }

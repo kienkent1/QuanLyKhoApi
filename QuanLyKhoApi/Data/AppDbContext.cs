@@ -44,6 +44,7 @@ namespace QuanLyKhoApi.Data
             //    .WithMany(r => r.TaiKhoanRoles)
             //    .HasForeignKey(tr => tr.RoleId)
             //    .OnDelete(DeleteBehavior.Cascade);
+
             modelBuilder.Entity<NhanVien>()
                 .Property(nv => nv.diaChi)
                 .HasColumnType("jsonb")
@@ -52,6 +53,13 @@ namespace QuanLyKhoApi.Data
                 .Property(ncc => ncc.DiaChi)
                 .HasColumnType("jsonb")
                 .HasDefaultValueSql("'{}'::jsonb");
+            modelBuilder.Entity<NhanVien>()
+                .HasIndex(nv => nv.MaNV)
+                .IsUnique();
+
+            modelBuilder.Entity<HangHoa>()
+                .HasIndex(h => h.MaHHShow)
+                .IsUnique();
 
             //seeds data
             modelBuilder.Entity<Role>().HasData(
@@ -101,34 +109,35 @@ namespace QuanLyKhoApi.Data
                 new TrangThaiPhieu { MaTrangThai = 3, TenTrangThai = "Hủy" }
                 );
 
-            //modelBuilder.Entity<NhanVien>().HasData(
-            //    new NhanVien
-            //    {
-            //        IdNhanVien = Guid.Parse("49a522ed-edb3-44b6-abf7-e6b1962003cf"),
-            //        TenNhanVien = "Nguyễn Văn A",
-            //        email = "nguyenvana@gmail.com",
-            //        sdt = "0123456789",
-            //        gioiTinh = "Nam",
-            //        ngaySinh = new DateTime(1990, 1, 1),
-            //        trangthai = true,
-            //        CreatedAt = DateTime.UtcNow,
-            //        chucVu = "Admin"
-            //    });
-            //modelBuilder.Entity<TaiKhoan>().HasData(
-            //    new TaiKhoan
-            //    {
-            //        IdNhanVien = Guid.Parse("49a522ed-edb3-44b6-abf7-e6b1962003cf"),
-            //        TenDangNhap = "adminA",
-            //        Password = "AQAAAAIAAYagAAAAEEms0ysPRm2n5vnXRawAsarpqN71JIBmAsB6o/LwNQElvYkETT9sR3eCUBaE9SpJtA==",//admin1234
-            //        CreatedAt = DateTime.UtcNow
-            //    });
+            modelBuilder.Entity<NhanVien>().HasData(
+                new NhanVien
+                {
+                    IdNhanVien = Guid.Parse("49a522ed-edb3-44b6-abf7-e6b1962003cf"),
+                    MaNV = "NV1",
+                    TenNhanVien = "Nguyễn Văn A",
+                    email = "nguyenvana@gmail.com",
+                    sdt = "0123456789",
+                    gioiTinh = "Nam",
+                    ngaySinh = new DateTime(1990, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                    trangthai = true,
+                    CreatedAt = new DateTime(2025, 10, 30, 9, 38, 50, DateTimeKind.Utc),
+                    chucVu = "Admin"
+                });
+            modelBuilder.Entity<TaiKhoan>().HasData(
+                new TaiKhoan
+                {
+                    IdNhanVien = Guid.Parse("49a522ed-edb3-44b6-abf7-e6b1962003cf"),
+                    TenDangNhap = "adminA",
+                    Password = "AQAAAAIAAYagAAAAEEms0ysPRm2n5vnXRawAsarpqN71JIBmAsB6o/LwNQElvYkETT9sR3eCUBaE9SpJtA==",//admin1234
+                    CreatedAt = new DateTime(2025, 10, 30, 9, 38, 50, DateTimeKind.Utc)
+                });
 
-            //modelBuilder.Entity<TaiKhoanRole>().HasData(
-            //    new TaiKhoanRole
-            //    {
-            //        TaiKhoanId = Guid.Parse("49a522ed-edb3-44b6-abf7-e6b1962003cf"),
-            //        RoleId = "admin"
-            //    });
+            modelBuilder.Entity<TaiKhoanRole>().HasData(
+                new TaiKhoanRole
+                {
+                    TaiKhoanId = Guid.Parse("49a522ed-edb3-44b6-abf7-e6b1962003cf"),
+                    RoleId = "admin"
+                });
         }
     }
 }

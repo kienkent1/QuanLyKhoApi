@@ -156,9 +156,14 @@ namespace QuanLyKhoApi.Services
 
         public async Task<ServiceResult<string>> ChangePassword(ChangePassworDto Pass, Guid id)
         {
+
+            if (Pass.NewPassword != Pass.ConfirmPassword) return ServiceResult<string>.Fail("Mật khẩu mới và xác nhận mật khẩu khác nhau", 400);
+
             var userPass = await db.TaiKhoan.FirstOrDefaultAsync(tk => tk.IdNhanVien == id);
             var user = await db.NhanVien.FirstOrDefaultAsync(us => us.IdNhanVien == id);
+
             if (user is null || userPass is null) return ServiceResult<string>.Fail("Không tìm thấy tài khoản", 404);
+
             var NewReqCP = mapper.Map<ChangePassModel>(user);
             NewReqCP.PasswordHash = userPass.Password;
 
@@ -167,10 +172,13 @@ namespace QuanLyKhoApi.Services
             {
                 return ServiceResult<string>.Fail("Mật khẩu không đúng", 400);
             }
-            if (Pass.NewPassword != Pass.ConfirmPassword) return ServiceResult<string>.Fail("Mật khẩu mới và xác nhận mật khẩu khác nhau", 400);
+
 
             string HashPass = new PasswordHasher<ChangePassModel>().HashPassword(NewReqCP, Pass.NewPassword);
-            return ServiceResult<string>.Ok(HashPass);
+            userPass.Password = HashPass;
+            db.TaiKhoan.Update(userPass);
+            await db.SaveChangesAsync();
+            return ServiceResult<string>.Ok(Pass.NewPassword);
         }
 
         public async Task<ServiceResult<string>> UpdateAvatarNV(string id, IFormFile file)

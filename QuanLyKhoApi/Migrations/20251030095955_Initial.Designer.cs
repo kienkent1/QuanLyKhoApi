@@ -13,8 +13,8 @@ using QuanLyKhoApi.Data;
 namespace QuanLyKhoApi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251020134508_Update-HangHoa")]
-    partial class UpdateHangHoa
+    [Migration("20251030095955_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -67,6 +67,9 @@ namespace QuanLyKhoApi.Migrations
                     b.Property<int>("SoLuongTon")
                         .HasColumnType("integer");
 
+                    b.Property<string>("TenPhienBan")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.HasIndex("MaHH");
@@ -88,7 +91,7 @@ namespace QuanLyKhoApi.Migrations
                     b.Property<Guid>("MaCauHinh")
                         .HasColumnType("uuid");
 
-                    b.Property<int?>("PhieuNhapMaPhieuNhap")
+                    b.Property<int>("MaPhieuNhap")
                         .HasColumnType("integer");
 
                     b.Property<int>("SoLuong")
@@ -98,18 +101,18 @@ namespace QuanLyKhoApi.Migrations
 
                     b.HasIndex("MaCauHinh");
 
-                    b.HasIndex("PhieuNhapMaPhieuNhap");
+                    b.HasIndex("MaPhieuNhap");
 
                     b.ToTable("ChiTietNhap");
                 });
 
             modelBuilder.Entity("QuanLyKhoApi.Data.ChiTietXuat", b =>
                 {
-                    b.Property<int>("MaPhieuXuat")
+                    b.Property<int>("MaChiTietXuat")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("MaPhieuXuat"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("MaChiTietXuat"));
 
                     b.Property<decimal>("DonGia")
                         .HasColumnType("numeric");
@@ -117,17 +120,17 @@ namespace QuanLyKhoApi.Migrations
                     b.Property<Guid>("MaCauHinh")
                         .HasColumnType("uuid");
 
-                    b.Property<int?>("PhieuXuatMaPhieuXuat")
+                    b.Property<int>("MaPhieuXuat")
                         .HasColumnType("integer");
 
-                    b.Property<int>("SoLuong")
+                    b.Property<int?>("SoLuong")
                         .HasColumnType("integer");
 
-                    b.HasKey("MaPhieuXuat");
+                    b.HasKey("MaChiTietXuat");
 
                     b.HasIndex("MaCauHinh");
 
-                    b.HasIndex("PhieuXuatMaPhieuXuat");
+                    b.HasIndex("MaPhieuXuat");
 
                     b.ToTable("ChiTietXuat");
                 });
@@ -374,6 +377,10 @@ namespace QuanLyKhoApi.Migrations
                     b.Property<int>("IdLoai")
                         .HasColumnType("integer");
 
+                    b.Property<string>("MaHHShow")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("MoTa")
                         .HasColumnType("text");
 
@@ -391,6 +398,9 @@ namespace QuanLyKhoApi.Migrations
                     b.HasKey("MaHH");
 
                     b.HasIndex("IdLoai");
+
+                    b.HasIndex("MaHHShow")
+                        .IsUnique();
 
                     b.HasIndex("NhaCungCapId");
 
@@ -508,6 +518,10 @@ namespace QuanLyKhoApi.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("MaNV")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("TenNhanVien")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -549,7 +563,25 @@ namespace QuanLyKhoApi.Migrations
 
                     b.HasKey("IdNhanVien");
 
+                    b.HasIndex("MaNV")
+                        .IsUnique();
+
                     b.ToTable("NhanVien");
+
+                    b.HasData(
+                        new
+                        {
+                            IdNhanVien = new Guid("49a522ed-edb3-44b6-abf7-e6b1962003cf"),
+                            CreatedAt = new DateTime(2025, 10, 30, 9, 38, 50, 0, DateTimeKind.Utc),
+                            MaNV = "NV1",
+                            TenNhanVien = "Nguyễn Văn A",
+                            chucVu = "Admin",
+                            email = "nguyenvana@gmail.com",
+                            gioiTinh = "Nam",
+                            ngaySinh = new DateTime(1990, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            sdt = "0123456789",
+                            trangthai = true
+                        });
                 });
 
             modelBuilder.Entity("QuanLyKhoApi.Data.PhieuNhap", b =>
@@ -569,10 +601,6 @@ namespace QuanLyKhoApi.Migrations
                     b.Property<Guid>("MaHH")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("MaNCC")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<Guid>("MaNV")
                         .HasColumnType("uuid");
 
@@ -581,6 +609,9 @@ namespace QuanLyKhoApi.Migrations
 
                     b.Property<DateTime>("NgayNhap")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("SoLuong")
+                        .HasColumnType("integer");
 
                     b.HasKey("MaPhieuNhap");
 
@@ -618,6 +649,9 @@ namespace QuanLyKhoApi.Migrations
 
                     b.Property<DateTime>("NgayXuat")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("SoLuong")
+                        .HasColumnType("integer");
 
                     b.HasKey("MaPhieuXuat");
 
@@ -714,6 +748,15 @@ namespace QuanLyKhoApi.Migrations
                     b.HasKey("IdNhanVien");
 
                     b.ToTable("TaiKhoan");
+
+                    b.HasData(
+                        new
+                        {
+                            IdNhanVien = new Guid("49a522ed-edb3-44b6-abf7-e6b1962003cf"),
+                            CreatedAt = new DateTime(2025, 10, 30, 9, 38, 50, 0, DateTimeKind.Utc),
+                            Password = "AQAAAAIAAYagAAAAEEms0ysPRm2n5vnXRawAsarpqN71JIBmAsB6o/LwNQElvYkETT9sR3eCUBaE9SpJtA==",
+                            TenDangNhap = "adminA"
+                        });
                 });
 
             modelBuilder.Entity("QuanLyKhoApi.Data.TaiKhoanRole", b =>
@@ -729,6 +772,13 @@ namespace QuanLyKhoApi.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("TaiKhoanRoles");
+
+                    b.HasData(
+                        new
+                        {
+                            TaiKhoanId = new Guid("49a522ed-edb3-44b6-abf7-e6b1962003cf"),
+                            RoleId = "admin"
+                        });
                 });
 
             modelBuilder.Entity("QuanLyKhoApi.Data.TaiKhoanToken", b =>
@@ -844,11 +894,15 @@ namespace QuanLyKhoApi.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("QuanLyKhoApi.Data.PhieuNhap", null)
+                    b.HasOne("QuanLyKhoApi.Data.PhieuNhap", "PhieuNhap")
                         .WithMany("ChiTietNhaps")
-                        .HasForeignKey("PhieuNhapMaPhieuNhap");
+                        .HasForeignKey("MaPhieuNhap")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("CauHinh");
+
+                    b.Navigation("PhieuNhap");
                 });
 
             modelBuilder.Entity("QuanLyKhoApi.Data.ChiTietXuat", b =>
@@ -859,11 +913,15 @@ namespace QuanLyKhoApi.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("QuanLyKhoApi.Data.PhieuXuat", null)
+                    b.HasOne("QuanLyKhoApi.Data.PhieuXuat", "PhieuXuat")
                         .WithMany("ChiTietXuats")
-                        .HasForeignKey("PhieuXuatMaPhieuXuat");
+                        .HasForeignKey("MaPhieuXuat")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("CauHinh");
+
+                    b.Navigation("PhieuXuat");
                 });
 
             modelBuilder.Entity("QuanLyKhoApi.Data.ComfirmAccount", b =>

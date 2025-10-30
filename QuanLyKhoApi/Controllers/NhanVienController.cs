@@ -140,10 +140,11 @@ namespace QuanLyKhoApi.Controllers
         }
 
         [Authorize]
-        [HttpPost("{id}/password")]
-        public async Task<IActionResult> ChangePassword([FromBody] ChangePassworDto Pass, [FromRoute] Guid id)
+        [HttpPost("password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePassworDto Pass)
         {
-            var result = await service.ChangePassword(Pass, id);
+            var idUser = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var result = await service.ChangePassword(Pass, Guid.Parse(idUser));
             return MyStatusCodeBase.MyStatusCode(this, result);
         }
 

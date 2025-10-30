@@ -9,6 +9,9 @@ namespace QuanLyKhoApi.Data
         [Key]
         public Guid MaHH { get; set; }
 
+        [Required]
+        public string MaHHShow { get; set; }
+
         [Required, MaxLength(200)]
         public string Model { get; set; }
 

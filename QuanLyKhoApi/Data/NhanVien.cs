@@ -5,7 +5,11 @@ namespace QuanLyKhoApi.Data
     public class NhanVien
     {
         [Key]
-        public Guid IdNhanVien   { get; set; }
+        public Guid IdNhanVien { get; set; }
+
+
+        [Required]
+        public string MaNV { get; set; }
         [Required, MaxLength(200)]
         public string TenNhanVien { get; set; }
         [Required]
