@@ -12,6 +12,8 @@ namespace QuanLyKhoApi.Dto
         [MaxLength(200, ErrorMessage = "Tên nhân viên không được vượt quá 200 ký tự")]
         public string UserName { get; set; }
 
+        public string MaNV { get; set; }
+
         [Required]
         public string email { get; set; }
 

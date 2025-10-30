@@ -90,7 +90,7 @@ namespace QuanLyKhoApi.Controllers
 
         [Authorize]
         [HttpPost]
-        public async Task<IActionResult> ThemNhanVien([FromBody] NhanVienDto dto)
+        public async Task<IActionResult> ThemNhanVien([FromForm] NhanVienDto dto)
         {
             var iduser = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var isHasClaim = await authorization.RoleHasClaimAsync(iduser, ClaimUser.ThemNhanVien);

@@ -27,6 +27,7 @@ namespace QuanLyKhoApi.Services
                     nv.TenNhanVien.Contains(query) ||
                     nv.IdNhanVien.ToString().Contains(query) ||
                     nv.email.Contains(query) ||
+                    nv.MaNV == query ||
                     nv.chucVu.Contains(query));
                 }
                 var result = await Helper.Pagination<NhanVien>.PaginationAsync(nhanVien, page, pageSize, sort);
@@ -84,6 +85,7 @@ namespace QuanLyKhoApi.Services
             var result = new ProfileUserDto
             {
                 TenNhanVien = profile.TenNhanVien,
+                MaNV = profile.MaNV,
                 UserName = userName.TenDangNhap,
                 email = profile.email,
                 sdt = profile.sdt,
@@ -102,8 +104,20 @@ namespace QuanLyKhoApi.Services
             try
             {
                 if (nhanVien is null) return ServiceResult<NhanVienDto>.Fail("Dữ liệu không hợp lệ", 400);
+
+                if (string.IsNullOrEmpty(nhanVien.MaNV))
+                {
+                    int CountNV = await db.NhanVien.CountAsync();
+                    nhanVien.MaNV = $"NV{CountNV + 1}";
+                }
+
+                var IsNhanVienExit = await db.NhanVien.FirstOrDefaultAsync(nv => nv.email == nhanVien.email || nv.MaNV == nhanVien.MaNV);
+
+                if (IsNhanVienExit is not null) return ServiceResult<NhanVienDto>.Fail("Mã nhân viên hoặc email nhân viên đã tồn tại", 400);
+
                 var NewNhanVien = mapper.Map<NhanVien>(nhanVien);
                 var urlHinh = new GitHubImageService.GitHubRes();
+
                 if (nhanVien.Hinh != null)
                 {
                     urlHinh = await git.UpdateOneImg(nhanVien.Hinh, "User");

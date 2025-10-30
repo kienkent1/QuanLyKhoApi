@@ -23,6 +23,14 @@ namespace QuanLyKhoApi.Services
                 if (nhaCungCap is null)
                     return ServiceResult<HangHoaDto>.Fail("Nhà cung cấp không tồn tại", 404);
 
+                if (string.IsNullOrEmpty(dto.MaHHShow))
+                {
+                    int CountHH = await _context.HangHoa.CountAsync();
+                    dto.MaHHShow = $"HH{CountHH + 1}";
+                }
+
+                var IsHHExit = await _context.HangHoa.AnyAsync(h => h.MaHHShow == dto.MaHHShow);
+                if (IsHHExit) return ServiceResult<HangHoaDto>.Fail("Mã hàng hóa đã tồn tại", 400);
                 var hangHoa = mapper.Map<HangHoa>(dto);
                 hangHoa.Deleted = false;
 
@@ -85,6 +93,7 @@ namespace QuanLyKhoApi.Services
                     .Select(h => new ListHangHoaDto
                     {
                         Id = h.MaHH,
+                        MaHHShow = h.MaHHShow,
                         Model = h.Model,
                         MoTa = h.MoTa,
                         DonViTinh = h.DonViTinh,
@@ -102,6 +111,7 @@ namespace QuanLyKhoApi.Services
                         h => h.Model.Contains(query) ||
                         h.TenLoai.Contains(query) ||
                         h.TenNhaCungCap.Contains(query) ||
+                        h.MaHHShow == query ||
                         h.Id.ToString().Contains(query)
                     );
                 }
@@ -134,6 +144,7 @@ namespace QuanLyKhoApi.Services
                 var hangHoaDto = new DetailHangHoaDto
                 {
                     Id = hangHoa.MaHH,
+                    MaHHShow = hangHoa.MaHHShow,
                     Model = hangHoa.Model,
                     MoTa = hangHoa.MoTa,
                     DonViTinh = hangHoa.DonViTinh,

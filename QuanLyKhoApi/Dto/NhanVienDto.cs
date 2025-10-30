@@ -9,12 +9,15 @@ namespace QuanLyKhoApi.Dto
         [MaxLength(200, ErrorMessage = "Tên nhân viên không được vượt quá 200 ký tự")]
         public string TenNhanVien { get; set; }
 
+        [RegularExpression(@"^[a-zA-Z0-9_-]+$", ErrorMessage = "Mã nhân viên chỉ được chứa chữ, số, dấu gạch ngang (-) và gạch dưới (_)")]
+        public string? MaNV { get; set; }
+
         [Required(ErrorMessage = "Email là bắt buộc")]
         [EmailAddress(ErrorMessage = "Email không đúng định dạng")]
         public string email { get; set; }
 
         [Required(ErrorMessage = "Số điện thoại là bắt buộc")]
-  
+
         [RegularExpression(@"^\d{9,13}$", ErrorMessage = "Số điện thoại phải có từ 9 đến 13 chữ số")]
 
         public string sdt { get; set; }
