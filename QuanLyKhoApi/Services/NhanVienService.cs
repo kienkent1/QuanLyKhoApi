@@ -40,41 +40,23 @@ namespace QuanLyKhoApi.Services
             }
         }
 
-        public async Task<ServiceResult<NhanVienDto>> GetNhanVienByIdAsync(Guid id)
+        public async Task<ServiceResult<DetailNhanVienDto>> GetNhanVienByIdAsync(Guid id)
         {
             try
             {
                 var nhanVien = await db.NhanVien.FirstOrDefaultAsync(nv => nv.IdNhanVien == id);
                 if (nhanVien is null)
-                    return ServiceResult<NhanVienDto>.Fail("Không tìm thấy nhân viên", 404);
+                    return ServiceResult<DetailNhanVienDto>.Fail("Không tìm thấy nhân viên", 404);
 
-                var result = mapper.Map<NhanVienDto>(nhanVien);
-                return ServiceResult<NhanVienDto>.Ok(result, 200, "Lấy thông tin nhân viên thành công");
+                var result = mapper.Map<DetailNhanVienDto>(nhanVien);
+                return ServiceResult<DetailNhanVienDto>.Ok(result, 200, "Lấy thông tin nhân viên thành công");
             }
             catch (Exception ex)
             {
-                return ServiceResult<NhanVienDto>.Fail($"Lỗi: {ex.Message}", 500);
+                return ServiceResult<DetailNhanVienDto>.Fail($"Lỗi: {ex.Message}", 500);
             }
         }
 
-        public async Task<ServiceResult<bool>> DeleteNhanVienAsync(Guid id)
-        {
-            try
-            {
-                var nhanVien = await db.NhanVien.FirstOrDefaultAsync(nv => nv.IdNhanVien == id);
-                if (nhanVien is null)
-                    return ServiceResult<bool>.Fail("Không tìm thấy nhân viên", 404);
-
-                db.NhanVien.Remove(nhanVien);
-                await db.SaveChangesAsync();
-
-                return ServiceResult<bool>.Ok(true, 200, "Xóa nhân viên thành công");
-            }
-            catch (Exception ex)
-            {
-                return ServiceResult<bool>.Fail($"Lỗi: {ex.Message}", 500);
-            }
-        }
 
         public async Task<ServiceResult<ProfileUserDto>> ProfileUser(string id)
         {

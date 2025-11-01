@@ -164,20 +164,6 @@ namespace QuanLyKhoApi.Controllers
         }
 
         [Authorize]
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(Guid id)
-        {
-            var iduser = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var isHasClaim = await authorization.RoleHasClaimAsync(iduser, ClaimUser.XoaNhanVien);
-            if (isHasClaim.Success == false)
-            {
-                return MyStatusCodeBase.MyStatusCode(this, isHasClaim);
-            }
-            var result = await service.DeleteNhanVienAsync(id);
-            return MyStatusCodeBase.MyStatusCode(this, result);
-        }
-
-        [Authorize]
         [HttpPatch("BlocUser/{id}")]
         public async Task<IActionResult> BlocUser([FromRoute] Guid id)
         {

@@ -5,6 +5,7 @@ namespace QuanLyKhoApi.Dto
 {
     public class NhanVienDto
     {
+
         [Required(ErrorMessage = "Tên nhân viên là bắt buộc")]
         [MaxLength(200, ErrorMessage = "Tên nhân viên không được vượt quá 200 ký tự")]
         public string TenNhanVien { get; set; }
@@ -35,5 +36,10 @@ namespace QuanLyKhoApi.Dto
         public string chucVu { get; set; }
 
 
+    }
+
+    public class DetailNhanVienDto : NhanVienDto
+    {
+        public string idNhanVien { get; set; }
     }
 }
