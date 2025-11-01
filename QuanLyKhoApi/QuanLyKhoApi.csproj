@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Include="properties\launchSettings.Example.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
     <PackageReference Include="BarCode" Version="2025.10.4" />
     <PackageReference Include="Google.Apis.Auth" Version="1.71.0" />
