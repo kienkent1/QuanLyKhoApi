@@ -93,6 +93,11 @@ namespace QuanLyKhoApi.Services
                     nhanVien.MaNV = $"NV{CountNV + 1}";
                 }
 
+                if (DateTime.Today.AddYears(-15) < nhanVien.ngaySinh)
+                {
+                    return ServiceResult<NhanVienDto>.Fail("Nhân viên Chưa đủ 15 tuổi", 400);
+                }
+
                 var IsNhanVienExit = await db.NhanVien.FirstOrDefaultAsync(nv => nv.email == nhanVien.email || nv.MaNV == nhanVien.MaNV);
 
                 if (IsNhanVienExit is not null) return ServiceResult<NhanVienDto>.Fail("Mã nhân viên hoặc email nhân viên đã tồn tại", 400);
@@ -137,7 +142,14 @@ namespace QuanLyKhoApi.Services
                 nv.diaChi = dto.diaChi;
 
             if (dto.ngaySinh != default)
+            {
+                if (DateTime.Today.AddYears(-15) < dto.ngaySinh)
+                {
+                    return ServiceResult<UpdateNhanVienDto>.Fail("Nhân viên Chưa đủ 15 tuổi", 400);
+                }
                 nv.ngaySinh = DateTime.SpecifyKind((DateTime)dto.ngaySinh, DateTimeKind.Utc);
+            }
+
 
             if (!string.IsNullOrEmpty(dto.chucVu))
                 nv.chucVu = dto.chucVu;
